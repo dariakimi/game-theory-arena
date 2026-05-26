@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Theory Arena</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+:root{--cyan:#00d4ff;--pink:#ff2d78;--gold:#ffd700;--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;--border:#2a2a3a}
+
+/* PROGRESS BAR */
+#progress-bar-wrap{position:fixed;top:0;left:0;right:0;height:4px;background:#1a1a28;z-index:100}
+#progress-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));width:0%;transition:width .4s}
+
+/* HEADER */
+#header{position:fixed;top:4px;left:0;right:0;height:48px;background:rgba(10,10,15,.95);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:99;border-bottom:1px solid var(--border)}
+#header-title{font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase}
+#header-right{display:flex;align-items:center;gap:16px;font-size:13px}
+#score-display{color:var(--gold);font-weight:700}
+#scenario-counter{color:#888}
+.category-badge{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11px;color:var(--pink);letter-spacing:.05em}
+
+/* MAIN LAYOUT */
+#app{margin-top:52px;padding:20px;max-width:860px;margin-left:auto;margin-right:auto}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block}
+
+/* LANDING */
+#landing{text-align:center;padding:40px 20px}
+#landing h1{font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:-.02em;margin-bottom:8px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#landing .subtitle{color:#888;font-size:15px;margin-bottom:40px}
+.game-types-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:40px}
+.game-type-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:left}
+.game-type-card .gt-icon{font-size:24px;margin-bottom:8px}
+.game-type-card h3{font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase}
+.game-type-card p{font-size:12px;color:#888;line-height:1.5}
+.landing-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+#start-btn{background:linear-gradient(135deg,var(--cyan),var(--pink));border:none;color:#000;font-size:16px;font-weight:800;padding:14px 48px;border-radius:8px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:transform .1s,box-shadow .1s}
+#start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,212,255,.3)}
+#start-btn:active{transform:translateY(0)}
+#pick-btn{background:none;border:2px solid var(--border);color:#aaa;font-size:16px;font-weight:700;padding:14px 32px;border-radius:8px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:all .15s}
+#pick-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* GAME SCREEN */
+#game-screen{padding:4px 0}
+.situation-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.situation-box .concept-tag{font-size:11px;color:var(--pink);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.situation-box h2{font-size:18px;font-weight:700;margin-bottom:10px;color:#fff}
+.situation-box p{font-size:14px;color:#aaa;line-height:1.6}
+
+/* MATRIX GAME */
+.matrix-wrap{overflow-x:auto;margin-bottom:16px}
+.matrix-table{border-collapse:collapse;width:100%;min-width:300px}
+.matrix-table th{padding:10px 14px;font-size:12px;font-weight:600;color:#888;letter-spacing:.05em;text-align:center}
+.matrix-table th.row-header{text-align:right;color:var(--cyan)}
+.matrix-table th.col-header{color:var(--pink)}
+.matrix-cell{padding:12px 8px;border:1px solid var(--border);text-align:center;cursor:pointer;transition:all .15s;position:relative;background:var(--bg2)}
+.matrix-cell:hover{background:var(--bg3);border-color:var(--cyan)}
+.matrix-cell.outcome{outline:2px solid var(--gold);outline-offset:-2px;background:rgba(255,215,0,.15)!important}
+.payoff-you{color:var(--cyan);font-size:15px;font-weight:700}
+.payoff-opp{color:var(--pink);font-size:15px;font-weight:700}
+.payoff-sep{color:#444;font-size:12px;margin:0 4px}
+.row-label-cell{padding:8px 12px;text-align:right;font-size:13px;font-weight:600;color:var(--cyan);white-space:nowrap;border:1px solid var(--border);background:var(--bg2)}
+.row-strategy-btn{background:rgba(0,212,255,.1);border:1px solid var(--cyan);color:var(--cyan);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap}
+.row-strategy-btn:hover{background:rgba(0,212,255,.2)}
+.row-strategy-btn.chosen{background:var(--cyan);color:#000}
+.strategy-row-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+
+/* RESULT BOX */
+.result-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.result-box.win{border-color:var(--gold)}
+.result-box.loss{border-color:var(--pink)}
+.result-title{font-size:20px;font-weight:800;margin-bottom:8px}
+.result-payoff{font-size:32px;font-weight:900;color:var(--gold);margin-bottom:8px}
+.result-detail{font-size:13px;color:#888;line-height:1.6;margin-bottom:12px}
+.nash-explain{font-size:13px;color:#bbb;line-height:1.6;padding:12px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:8px}
+.nash-explain strong{color:var(--gold)}
+
+/* ULTIMATUM GAME */
+.ultimatum-split-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px}
+.split-btn{background:var(--bg2);border:1px solid var(--border);color:#e0e0e0;padding:12px 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;text-align:center;transition:all .15s}
+.split-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.08)}
+.split-btn .you-get{font-size:11px;color:var(--cyan)}
+.split-btn .they-get{font-size:11px;color:var(--pink)}
+.pot-display{text-align:center;font-size:14px;color:#888;margin-bottom:16px}
+.pot-display strong{color:#fff}
+
+/* CENTIPEDE GAME */
+.centipede-wrap{margin-bottom:16px}
+.centipede-chain{display:flex;align-items:center;gap:0;overflow-x:auto;padding:20px 0;margin-bottom:16px}
+.cent-node{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.cent-node-circle{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;transition:all .2s}
+.cent-node-circle.player-node{border-color:var(--cyan);color:var(--cyan)}
+.cent-node-circle.comp-node{border-color:var(--pink);color:var(--pink)}
+.cent-node-circle.active-node{box-shadow:0 0 16px currentColor}
+.cent-node-circle.taken-node{background:var(--pink);border-color:var(--pink);color:#000}
+.cent-node-circle.passed-node{background:rgba(0,212,255,.2)}
+.cent-connector{height:2px;width:28px;background:var(--border);flex-shrink:0}
+.cent-connector.passed{background:var(--cyan)}
+.cent-payoffs{font-size:10px;text-align:center;margin-top:6px;line-height:1.4}
+.cent-payoffs .cy{color:var(--cyan)}
+.cent-payoffs .cp{color:var(--pink)}
+.cent-actions{display:flex;gap:12px;margin-bottom:16px}
+.cent-btn{flex:1;padding:14px;border-radius:8px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.05em}
+.take-btn{background:rgba(255,45,120,.15);border:1px solid var(--pink);color:var(--pink)}
+.take-btn:hover{background:var(--pink);color:#000}
+.pass-btn{background:rgba(0,212,255,.1);border:1px solid var(--cyan);color:var(--cyan)}
+.pass-btn:hover{background:var(--cyan);color:#000}
+.cent-status{font-size:13px;color:#888;margin-bottom:8px;text-align:center}
+
+/* REPEATED PD */
+.pd-rounds-wrap{margin-bottom:16px}
+.pd-history{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;min-height:60px;max-height:200px;overflow-y:auto}
+.pd-round-row{display:flex;align-items:center;gap:12px;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)}
+.pd-round-row:last-child{border-bottom:none}
+.pd-round-num{color:#555;width:28px;flex-shrink:0}
+.pd-move{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.05em}
+.pd-move.C{background:rgba(0,212,255,.15);color:var(--cyan)}
+.pd-move.D{background:rgba(255,45,120,.15);color:var(--pink)}
+.pd-round-payoff{color:var(--gold);font-weight:700;margin-left:auto}
+.pd-actions{display:flex;gap:12px;margin-bottom:16px}
+.pd-btn{flex:1;padding:14px;border-radius:8px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+.cooperate-btn{background:rgba(0,212,255,.1);border:1px solid var(--cyan);color:var(--cyan)}
+.cooperate-btn:hover{background:var(--cyan);color:#000}
+.defect-btn{background:rgba(255,45,120,.1);border:1px solid var(--pink);color:var(--pink)}
+.defect-btn:hover{background:var(--pink);color:#000}
+.pd-score-row{display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:8px}
+.pd-score-row strong{color:#fff}
+.rounds-left{color:var(--gold);font-weight:700}
+
+/* NEXT BTN */
+#next-btn{width:100%;padding:14px;background:var(--bg2);border:1px solid var(--border);color:#fff;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;transition:all .15s;letter-spacing:.05em;margin-top:8px;display:none}
+#next-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* END SCREEN */
+#end-screen{text-align:center;padding:40px 20px}
+#end-screen h1{font-size:36px;font-weight:900;margin-bottom:8px;background:linear-gradient(90deg,var(--gold),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.profile-card{background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:32px;margin:24px auto;max-width:500px;box-shadow:0 0 60px rgba(255,215,0,.15)}
+.profile-title{font-size:26px;font-weight:900;color:var(--gold);margin-bottom:8px}
+.profile-desc{font-size:14px;color:#aaa;line-height:1.6;margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat-box{background:var(--bg3);border-radius:8px;padding:12px}
+.stat-num{font-size:24px;font-weight:900;color:var(--cyan)}
+.stat-label{font-size:11px;color:#666;letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+#play-again-btn{background:linear-gradient(135deg,var(--cyan),var(--pink));border:none;color:#000;font-size:15px;font-weight:800;padding:12px 40px;border-radius:8px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase}
+
+/* UTILS */
+.hidden{display:none!important}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.nash-badge{display:inline-block;background:rgba(255,215,0,.15);border:1px solid var(--gold);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.05em;margin-left:8px}
+.glow-cyan{text-shadow:0 0 20px var(--cyan)}
+.info-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#888}
+.info-row strong{color:#bbb}
+/* Browse panel */
+#browse-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;display:none;cursor:pointer}
+#browse-overlay.open{display:block}
+#browse-panel{position:fixed;top:0;left:0;width:300px;height:100%;background:#0f1117;border-right:1px solid var(--border);z-index:200;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s ease}
+#browse-panel.open{transform:translateX(0)}
+#browse-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+#browse-head h3{margin:0;font-size:14px;color:#ccc;font-weight:600}
+#browse-close{background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:0}
+#browse-close:hover{color:#ccc}
+#browse-list{overflow-y:auto;flex:1;padding-bottom:24px}
+.browse-cat{padding:12px 14px 4px;font-size:10px;font-weight:700;color:#444;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid rgba(255,255,255,.04);margin-top:4px}
+.browse-cat:first-child{border-top:none;margin-top:0}
+.browse-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s}
+.browse-item:hover{background:var(--bg2)}
+.browse-item.current{background:rgba(0,212,255,.07);border-left:2px solid var(--cyan)}
+.browse-item.done{opacity:.4}
+.browse-icon{font-size:13px;flex-shrink:0}
+.browse-title{font-size:12px;color:#bbb;flex:1;line-height:1.3}
+.browse-type{font-size:10px;color:#444;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- Browse panel -->
+<div id="browse-overlay" onclick="closeBrowse()"></div>
+<div id="browse-panel">
+  <div id="browse-head">
+    <h3>All Scenarios</h3>
+    <button id="browse-close" onclick="closeBrowse()">✕</button>
+  </div>
+  <div id="browse-list"></div>
+</div>
+
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+<div id="header">
+  <div id="header-title">Game Theory Arena</div>
+  <div id="header-right">
+    <span id="scenario-counter"></span>
+    <span class="category-badge" id="category-badge"></span>
+    <span id="score-display">Score: 0</span>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- LANDING -->
+  <div id="landing" class="screen active">
+    <h1>Game Theory Arena</h1>
+    <p class="subtitle">50 scenarios. Four game types. How rational are you really?</p>
+    <div class="game-types-grid">
+      <div class="game-type-card">
+        <div class="gt-icon">⚔️</div>
+        <h3>Matrix Games</h3>
+        <p>Pick a strategy simultaneously with your opponent. Nash equilibria are labeled after your move.</p>
+      </div>
+      <div class="game-type-card">
+        <div class="gt-icon">⚖️</div>
+        <h3>Ultimatum</h3>
+        <p>Propose a split of 100 points. The computer accepts or rejects based on a hidden fairness threshold.</p>
+      </div>
+      <div class="game-type-card">
+        <div class="gt-icon">🪜</div>
+        <h3>Centipede</h3>
+        <p>Take your share now or pass for a bigger pot. Logic says take immediately. Does that hold?</p>
+      </div>
+      <div class="game-type-card">
+        <div class="gt-icon">🔄</div>
+        <h3>Repeated PD</h3>
+        <p>Play the same dilemma multiple rounds against a named strategy. Does cooperation survive?</p>
+      </div>
+    </div>
+    <div class="landing-btns">
+      <button id="start-btn" onclick="startGame()">Start Playing</button>
+      <button id="pick-btn" onclick="openBrowse()">Pick a Game</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="screen">
+    <div class="situation-box fade-in" id="situation-box">
+      <div class="concept-tag" id="concept-tag"></div>
+      <h2 id="scenario-title"></h2>
+      <p id="scenario-situation"></p>
+    </div>
+    <div id="game-area" class="fade-in"></div>
+    <div id="result-area" class="hidden fade-in"></div>
+    <button id="next-btn" onclick="nextScenario()">Next Scenario →</button>
+  </div>
+
+  <!-- END -->
+  <div id="end-screen" class="screen">
+    <h1>Session Complete</h1>
+    <div class="profile-card">
+      <div class="profile-title" id="profile-title"></div>
+      <div class="profile-desc" id="profile-desc"></div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-num" id="stat-total"></div><div class="stat-label">Total Score</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-nash"></div><div class="stat-label">Joint Optimum Rate</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-coop"></div><div class="stat-label">Cooperation Rate</div></div>
+      </div>
+      <button id="play-again-btn" onclick="resetGame()">Play Again</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const STATE = {
+  idx: 0,
+  order: [],
+  score: 0,
+  nashHits: 0,   // for info only, not rewarded
+  nashOpps: 0,
+  paretoHits: 0, // reached social optimum in matrix games
+  paretoOpps: 0,
+  cooperate: 0,
+  defect: 0,
+  pdRound: 0,
+  pdHistory: [],
+  pdScore: 0,
+  pdCompHistory: [],
+  centNode: 0,
+  centTurn: 'player',
+  centPayoffs: null,
+  answered: false
+};
+
+// ============================================================
+// NASH VERIFIER (runs on load)
+// ============================================================
+function verifyNash(s) {
+  if (s.type !== 'matrix') return;
+  const R = s.rows.length, C = s.cols.length;
+  const issues = [];
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const idx = r * C + c;
+      const myPay = s.m[idx][0];
+      const oppPay = s.m[idx][1];
+      let isBestRow = true, isBestCol = true;
+      for (let r2 = 0; r2 < R; r2++) {
+        if (r2 !== r && s.m[r2 * C + c][0] > myPay) { isBestRow = false; break; }
+      }
+      for (let c2 = 0; c2 < C; c2++) {
+        if (c2 !== c && s.m[r * C + c2][1] > oppPay) { isBestCol = false; break; }
+      }
+      const shouldBeNash = isBestRow && isBestCol;
+      const isMarkedNash = s.n.includes(idx);
+      if (shouldBeNash !== isMarkedNash) {
+        issues.push(`"${s.t}" cell (${r},${c}): computed=${shouldBeNash}, marked=${isMarkedNash}`);
+      }
+    }
+  }
+  if (issues.length) console.warn('[Nash Verifier]', issues);
+}
+
+// ============================================================
+// COMPUTER STRATEGY HELPERS
+// ============================================================
+function computerColumn(s) {
+  const R = s.rows.length, C = s.cols.length;
+  // dominant column: a col c where for all r, m[r*C+c][1] >= m[r*C+c'][1] for all c'
+  for (let c = 0; c < C; c++) {
+    let dominant = true;
+    for (let c2 = 0; c2 < C; c2++) {
+      if (c2 === c) continue;
+      for (let r = 0; r < R; r++) {
+        if (s.m[r * C + c][1] < s.m[r * C + c2][1]) { dominant = false; break; }
+      }
+      if (!dominant) break;
+    }
+    if (dominant) return c;
+  }
+  // nash-consistent columns
+  const nashCols = new Set(s.n.map(ni => ni % C));
+  if (nashCols.size > 0) {
+    const arr = [...nashCols];
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  return Math.floor(Math.random() * C);
+}
+
+function pdComputerMove(strategy, myHistory, compHistory, round, rounds) {
+  switch (strategy) {
+    case 'always-c': return 'C';
+    case 'always-d': return 'D';
+    case 'random': return Math.random() < .5 ? 'C' : 'D';
+    case 'tit-for-tat': return round === 0 ? 'C' : myHistory[round - 1];
+    case 'grim': return myHistory.includes('D') ? 'D' : 'C';
+    case 'tit-for-two-tats':
+      if (round < 2) return 'C';
+      return (myHistory[round-1] === 'D' && myHistory[round-2] === 'D') ? 'D' : 'C';
+    case 'pavlov':
+      if (round === 0) return 'C';
+      const lastMy = myHistory[round-1], lastComp = compHistory[round-1];
+      return (lastMy === lastComp) ? 'C' : 'D';
+    default: return 'C';
+  }
+}
+
+// ============================================================
+// CENTIPEDE PAYOFF CALCULATOR
+// ============================================================
+function buildCentPayoffs(s) {
+  const payoffs = [];
+  let pot = [...s.startPot];
+  for (let i = 0; i < s.nodes; i++) {
+    payoffs.push([...pot]);
+    pot = [pot[1] * s.growth, pot[0] * s.growth];
+  }
+  return payoffs;
+}
+
+// ============================================================
+// RENDER ENGINE
+// ============================================================
+function renderScenario(s) {
+  STATE.answered = false;
+  document.getElementById('concept-tag').textContent = s.k;
+  document.getElementById('scenario-title').textContent = s.t;
+  document.getElementById('scenario-situation').textContent = s.s;
+  document.getElementById('category-badge').textContent = s.c;
+  document.getElementById('result-area').classList.add('hidden');
+  document.getElementById('result-area').innerHTML = '';
+  document.getElementById('next-btn').style.display = 'none';
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+
+  if (s.type === 'matrix') renderMatrix(s, area);
+  else if (s.type === 'ultimatum') renderUltimatum(s, area);
+  else if (s.type === 'centipede') renderCentipede(s, area);
+  else if (s.type === 'repeated') renderRepeated(s, area);
+}
+
+// --- MATRIX ---
+function renderMatrix(s, area) {
+  const R = s.rows.length, C = s.cols.length;
+  const compCol = computerColumn(s);
+
+  let html = '<p class="info-row">Pick your row strategy. The computer picks a column simultaneously.</p>';
+  html += '<div class="strategy-row-wrap">';
+  s.rows.forEach((row, r) => {
+    html += `<button class="row-strategy-btn" onclick="resolveMatrix(${r}, this)" data-r="${r}">${row}</button>`;
+  });
+  html += '</div>';
+  html += `<div class="matrix-wrap"><table class="matrix-table"><thead><tr><th class="row-header"><span style="color:var(--cyan)">You</span> \\ <span style="color:var(--pink)">${s.p || 'Opponent'}</span></th>`;
+  s.cols.forEach((col, ci) => html += `<th class="col-header" data-c="${ci}">${col}</th>`);
+  html += '</tr></thead><tbody>';
+  s.rows.forEach((row, r) => {
+    html += `<tr><td class="row-label-cell" data-r="${r}">${row}</td>`;
+    s.cols.forEach((col, c) => {
+      const idx = r * C + c;
+      const [my, opp] = s.m[idx];
+      const lo = s.lo ? s.lo[idx] : null;
+      html += `<td class="matrix-cell" data-r="${r}" data-c="${c}" data-nash="${s.n.includes(idx) ? '1' : '0'}">
+        ${lo
+          ? `<span class="payoff-you" style="font-size:12px;font-weight:700">${lo[0]}</span>
+             <span class="payoff-sep" style="display:block;height:4px"></span>
+             <span class="payoff-opp" style="font-size:12px;font-weight:700">${lo[1]}</span>
+             <div style="margin-top:5px;font-size:13px;font-weight:800"><span style="color:var(--cyan)">+${my}</span><span style="color:#444;font-size:10px"> / </span><span style="color:var(--pink)">+${opp}</span></div>`
+          : `<span class="payoff-you">${my}</span><span class="payoff-sep">,</span><span class="payoff-opp">${opp}</span>`
+        }
+        <div class="nash-label" style="display:none;font-size:9px;color:var(--gold);margin-top:2px">NASH</div>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += `<p style="font-size:11px;color:#555;margin-top:4px"><span style="color:var(--cyan)">■</span> Your outcome &nbsp;<span style="color:var(--pink)">■</span> Opponent's outcome</p>`;
+
+  area.innerHTML = html;
+  area.dataset.compCol = compCol;
+  area.dataset.type = 'matrix';
+  area.dataset.scenario = STATE.order[STATE.idx];
+}
+
+window.resolveMatrix = function(playerRow, btn) {
+  if (STATE.answered) return;
+  STATE.answered = true;
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  const R = s.rows.length, C = s.cols.length;
+  const area = document.getElementById('game-area');
+  const compCol = parseInt(area.dataset.compCol);
+  const idx = playerRow * C + compCol;
+  const [myPay, oppPay] = s.m[idx];
+  const isNash = s.n.includes(idx);
+
+  // Find social optimum: cell with max combined payoff
+  let bestSum = -Infinity, bestIdx = 0;
+  s.m.forEach((pair, i) => { const sum = pair[0] + pair[1]; if (sum > bestSum) { bestSum = sum; bestIdx = i; } });
+  const bestR = Math.floor(bestIdx / C), bestC = bestIdx % C;
+  const [bestYou, bestOpp] = s.m[bestIdx];
+  const atOptimum = idx === bestIdx;
+
+  // Reveal Nash cells and highlight outcome; mark social optimum
+  document.querySelectorAll('.matrix-cell').forEach(cell => {
+    const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
+    if (r === playerRow && c === compCol) cell.classList.add('outcome');
+    if (cell.dataset.nash === '1') {
+      cell.classList.add('nash');
+      cell.querySelector('.nash-label').style.display = 'block';
+    }
+    if (r === bestR && c === bestC) {
+      const opt = document.createElement('div');
+      opt.style.cssText = 'font-size:9px;color:#00ff88;margin-top:2px;font-weight:700';
+      opt.textContent = 'BEST JOINT';
+      cell.appendChild(opt);
+    }
+  });
+  document.querySelectorAll('.row-strategy-btn').forEach(b => {
+    if (parseInt(b.dataset.r) === playerRow) b.classList.add('chosen');
+    b.disabled = true;
+  });
+
+  STATE.nashOpps++;
+  if (isNash) STATE.nashHits++;
+  STATE.paretoOpps++;
+  if (atOptimum) STATE.paretoHits++;
+  const earned = myPay < oppPay ? 0 : myPay;
+  STATE.score += earned;
+  updateHeader();
+
+  const lo = s.lo;
+  const outcomeLabel = lo ? `<em style="color:#aaa">${lo[idx][0]}</em>` : `payoff: ${myPay}`;
+  const optLabel = lo ? `<em style="color:#aaa">${lo[bestIdx][0]} / ${lo[bestIdx][1]}</em>` : `${bestYou} + ${bestOpp} = ${bestSum}`;
+
+  const resultArea = document.getElementById('result-area');
+  resultArea.innerHTML = `
+    <div class="result-box ${earned > 0 ? 'win' : 'loss'}">
+      <div class="result-title">You played <strong style="color:var(--cyan)">${s.rows[playerRow]}</strong> · Computer played <strong style="color:var(--pink)">${s.cols[compCol]}</strong></div>
+      <div class="result-payoff">+${earned} pts${earned === 0 && myPay > 0 ? ` <span style="font-size:14px;color:#666">(payoff ${myPay}, inferior to opponent's ${oppPay})</span>` : ''}</div>
+      <div class="result-detail" style="margin-bottom:10px">Your outcome: ${outcomeLabel}</div>
+      <div class="nash-explain" style="margin-bottom:8px"><strong>Nash equilibria</strong>: ${s.n.length === 0 ? 'None in pure strategies.' : s.n.map(ni => `(${s.rows[Math.floor(ni/C)]}, ${s.cols[ni%C]})`).join(' · ')} — ${isNash ? 'you landed on one.' : 'you did not land on one.'}<br><br>${s.e}</div>
+      <div class="nash-explain" style="border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.06)"><strong style="color:#00ff88">Best for both parties</strong> (green label): (${s.rows[bestR]}, ${s.cols[bestC]}) — ${optLabel} — combined payoff ${bestSum}.<br>${atOptimum ? '✓ You reached the social optimum.' : `✗ You ended up at combined payoff ${myPay + oppPay}. The joint gain left on the table: ${bestSum - myPay - oppPay}.`}</div>
+    </div>`;
+  resultArea.classList.remove('hidden');
+  showNext();
+};
+
+// --- ULTIMATUM ---
+function renderUltimatum(s, area) {
+  let html = `<div class="pot-display">Total pot: <strong>100 points</strong> · Propose your split</div>`;
+  html += '<div class="ultimatum-split-grid">';
+  [10,20,30,40,50,60,70,80,90].forEach(offer => {
+    html += `<button class="split-btn" onclick="resolveUltimatum(${offer})">
+      <div style="font-size:16px;font-weight:700">${offer}/${100-offer}</div>
+      <div class="you-get">You: ${offer}</div>
+      <div class="they-get">They: ${100-offer}</div>
+    </button>`;
+  });
+  html += '</div>';
+  html += `<p class="info-row" style="margin-top:4px">The <span style="color:var(--pink)">${s.p||'opponent'}</span> has a hidden rejection threshold. If your offer to them is below it, both get 0.</p>`;
+  area.innerHTML = html;
+}
+
+window.resolveUltimatum = function(offer) {
+  if (STATE.answered) return;
+  STATE.answered = true;
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  const theirShare = 100 - offer;
+  const accepted = theirShare >= s.threshold;
+  const earned = accepted ? offer : 0;
+  STATE.score += earned;
+  updateHeader();
+
+  document.querySelectorAll('.split-btn').forEach(b => b.disabled = true);
+
+  const resultArea = document.getElementById('result-area');
+  resultArea.innerHTML = `
+    <div class="result-box ${accepted ? 'win' : 'loss'}">
+      <div class="result-title">${accepted ? '✓ Accepted' : '✗ Rejected'}</div>
+      <div class="result-payoff">${accepted ? '+'+offer+' pts' : '0 pts'}</div>
+      <div class="result-detail">You offered them ${theirShare} / kept ${offer}.<br>
+        Hidden threshold was <strong style="color:var(--gold)">${s.threshold}</strong> — they reject any offer below this.</div>
+      <div class="nash-explain">${s.reveal}</div>
+    </div>`;
+  resultArea.classList.remove('hidden');
+  showNext();
+};
+
+// --- CENTIPEDE ---
+function renderCentipede(s, area) {
+  STATE.centNode = 0;
+  STATE.centTurn = 'player';
+  STATE.centPayoffs = buildCentPayoffs(s);
+  renderCentipedeFull(s, area);
+}
+
+function renderCentipedeFull(s, area) {
+  const payoffs = STATE.centPayoffs;
+  const current = STATE.centNode;
+  const N = s.nodes;
+
+  let chainHtml = '<div class="centipede-chain">';
+  for (let i = 0; i < N; i++) {
+    const isPlayer = i % 2 === 0;
+    const isActive = i === current && !STATE.answered;
+    const isPassed = i < current;
+    let cls = isPlayer ? 'player-node' : 'comp-node';
+    if (isActive) cls += ' active-node';
+    if (isPassed) cls += ' passed-node';
+    chainHtml += `<div class="cent-node">
+      <div class="cent-node-circle ${cls}">${isPlayer ? 'Y' : 'C'}</div>
+      <div class="cent-payoffs"><span class="cy">${payoffs[i][0]}</span>/<span class="cp">${payoffs[i][1]}</span></div>
+    </div>`;
+    if (i < N - 1) chainHtml += `<div class="cent-connector${i < current ? ' passed' : ''}"></div>`;
+  }
+  chainHtml += '</div>';
+
+  const isYourTurn = STATE.centTurn === 'player' && !STATE.answered;
+  const actionsHtml = isYourTurn ? `
+    <div class="cent-actions">
+      <button class="cent-btn take-btn" onclick="centTake()">TAKE (end game)</button>
+      <button class="cent-btn pass-btn" onclick="centPass()">PASS (continue)</button>
+    </div>` : `<div class="cent-status">${STATE.answered ? '' : 'Computer is deciding...'}</div>`;
+
+  area.innerHTML = `
+    <div class="cent-status">Node ${current + 1} of ${N} · ${STATE.centTurn === 'player' ? '<span style="color:var(--cyan)">Your turn</span>' : '<span style="color:var(--pink)">Computer\'s turn</span>'}</div>
+    <p style="font-size:12px;color:#666;margin-bottom:8px">Payoffs at each node: <span style="color:var(--cyan)">You</span> / <span style="color:var(--pink)">Computer</span> — shown if TAKE is chosen there</p>
+    ${chainHtml}
+    ${actionsHtml}`;
+}
+
+window.centTake = function() {
+  if (STATE.answered || STATE.centTurn !== 'player') return;
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  const earned = STATE.centPayoffs[STATE.centNode][0];
+  STATE.answered = true;
+  STATE.score += earned;
+  updateHeader();
+  showCentResult(s, earned, 'You took at node ' + (STATE.centNode + 1) + '.');
+};
+
+window.centPass = function() {
+  if (STATE.answered || STATE.centTurn !== 'player') return;
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  STATE.centNode++;
+  if (STATE.centNode >= s.nodes) {
+    const earned = STATE.centPayoffs[s.nodes - 1][0];
+    STATE.answered = true; STATE.score += earned; updateHeader();
+    showCentResult(s, earned, 'Game ended — pot exhausted. You passed every node.');
+    return;
+  }
+  STATE.centTurn = 'computer';
+  renderCentipedeFull(s, document.getElementById('game-area'));
+  setTimeout(() => computerCentMove(s), 900);
+};
+
+function computerCentMove(s) {
+  const take = s.computer === 'backward' || (s.computer === 'cooperate' && STATE.centNode >= s.nodes - 1);
+  if (take) {
+    const oppEarned = STATE.centPayoffs[STATE.centNode][1];
+    const myEarned = 0;
+    STATE.answered = true;
+    STATE.score += myEarned;
+    updateHeader();
+    showCentResult(s, myEarned, 'Computer took at node ' + (STATE.centNode + 1) + '. You get 0.');
+  } else {
+    STATE.centNode++;
+    if (STATE.centNode >= s.nodes) {
+      const earned = STATE.centPayoffs[s.nodes - 1][1];
+      STATE.answered = true; STATE.score += 0; updateHeader();
+      showCentResult(s, 0, 'Game ended — pot exhausted. Computer passed every node. You get 0.');
+      return;
+    }
+    STATE.centTurn = 'player';
+    renderCentipedeFull(s, document.getElementById('game-area'));
+  }
+}
+
+function showCentResult(s, earned, summary) {
+  const resultArea = document.getElementById('result-area');
+  resultArea.innerHTML = `
+    <div class="result-box ${earned > 0 ? 'win' : 'loss'}">
+      <div class="result-title">${summary}</div>
+      <div class="result-payoff">+${earned} pts</div>
+      <div class="nash-explain">${s.e}</div>
+    </div>`;
+  resultArea.classList.remove('hidden');
+  renderCentipedeFull(s, document.getElementById('game-area'));
+  showNext();
+}
+
+// --- REPEATED PD ---
+function renderRepeated(s, area) {
+  STATE.pdRound = 0;
+  STATE.pdHistory = [];
+  STATE.pdCompHistory = [];
+  STATE.pdScore = 0;
+  renderPDFull(s, area);
+}
+
+function renderPDFull(s, area) {
+  const done = STATE.pdRound >= s.rounds;
+  const [[CC_me, CC_op], [CD_me, CD_op], [DC_me, DC_op], [DD_me, DD_op]] = s.m;
+
+  let histHtml = '<div class="pd-history">';
+  if (STATE.pdHistory.length === 0) {
+    histHtml += '<div style="color:#444;font-size:12px;text-align:center;padding:8px">Round history will appear here</div>';
+  } else {
+    STATE.pdHistory.forEach((myMove, i) => {
+      const compMove = STATE.pdCompHistory[i];
+      let pay;
+      if (myMove==='C'&&compMove==='C') pay = CC_me;
+      else if (myMove==='C'&&compMove==='D') pay = CD_me;
+      else if (myMove==='D'&&compMove==='C') pay = DC_me;
+      else pay = DD_me;
+      histHtml += `<div class="pd-round-row">
+        <span class="pd-round-num">#${i+1}</span>
+        <span><span style="color:var(--cyan)">You:</span> <span class="pd-move ${myMove}">${myMove==='C'?'Cooperate':'Defect'}</span></span>
+        <span><span style="color:var(--pink)">Comp:</span> <span class="pd-move ${compMove}">${compMove==='C'?'Cooperate':'Defect'}</span></span>
+        <span class="pd-round-payoff">+${pay}</span>
+      </div>`;
+    });
+  }
+  histHtml += '</div>';
+
+  const actionsHtml = !done ? `
+    <div class="pd-actions">
+      <button class="pd-btn cooperate-btn" onclick="pdMove('C')">Cooperate (C)</button>
+      <button class="pd-btn defect-btn" onclick="pdMove('D')">Defect (D)</button>
+    </div>` : '';
+
+  area.innerHTML = `
+    <div class="pd-score-row">
+      <span>Round <strong>${Math.min(STATE.pdRound+1, s.rounds)}</strong> of <strong>${s.rounds}</strong></span>
+      <span>Running score: <span class="rounds-left">${STATE.pdScore}</span></span>
+    </div>
+    <p style="font-size:12px;color:#666;margin-bottom:8px">Payoffs: C/C=${CC_me}, C/D=${CD_me} (sucker), D/C=${DC_me} (temptation), D/D=${DD_me}</p>
+    ${histHtml}
+    ${actionsHtml}`;
+}
+
+window.pdMove = function(myMove) {
+  if (STATE.answered) return;
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  const compMove = pdComputerMove(s.strategy, STATE.pdHistory, STATE.pdCompHistory, STATE.pdRound, s.rounds);
+  const [[CC_me],[CD_me],[DC_me],[DD_me]] = s.m;
+  let pay;
+  if (myMove==='C'&&compMove==='C') pay = CC_me;
+  else if (myMove==='C'&&compMove==='D') pay = CD_me;
+  else if (myMove==='D'&&compMove==='C') pay = DC_me;
+  else pay = DD_me;
+
+  if (myMove === 'C') STATE.cooperate++; else STATE.defect++;
+  STATE.pdHistory.push(myMove);
+  STATE.pdCompHistory.push(compMove);
+  STATE.pdScore += pay;
+  STATE.pdRound++;
+
+  if (STATE.pdRound >= s.rounds) {
+    STATE.answered = true;
+    STATE.score += STATE.pdScore;
+    updateHeader();
+    renderPDFull(s, document.getElementById('game-area'));
+    const resultArea = document.getElementById('result-area');
+    resultArea.innerHTML = `
+      <div class="result-box ${STATE.pdScore >= s.rounds * 2 ? 'win' : 'loss'}">
+        <div class="result-title">Game over · ${s.rounds} rounds complete</div>
+        <div class="result-payoff">+${STATE.pdScore} pts total</div>
+        <div class="result-detail">Computer strategy: <strong style="color:var(--pink)">${s.strategy}</strong></div>
+        <div class="nash-explain">${s.e}</div>
+      </div>`;
+    resultArea.classList.remove('hidden');
+    showNext();
+  } else {
+    renderPDFull(s, document.getElementById('game-area'));
+  }
+};
+
+// ============================================================
+// FLOW CONTROL
+// ============================================================
+function updateHeader() {
+  const total = SCENARIOS.length;
+  document.getElementById('score-display').textContent = 'Score: ' + STATE.score;
+  document.getElementById('scenario-counter').textContent = (STATE.idx + 1) + ' / ' + total;
+  document.getElementById('progress-bar').style.width = ((STATE.idx / total) * 100) + '%';
+}
+
+function showNext() {
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function startGame() {
+  STATE.order = SCENARIOS.map((_, i) => i);
+  // shuffle
+  for (let i = STATE.order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [STATE.order[i], STATE.order[j]] = [STATE.order[j], STATE.order[i]];
+  }
+  STATE.idx = 0;
+  STATE.score = 0; STATE.nashHits = 0; STATE.nashOpps = 0;
+  STATE.paretoHits = 0; STATE.paretoOpps = 0; STATE.cooperate = 0; STATE.defect = 0;
+  showScreen('game-screen');
+  updateHeader();
+  renderScenario(SCENARIOS[STATE.order[0]]);
+}
+
+// ============================================================
+// BROWSE PANEL
+// ============================================================
+const TYPE_ICON = {matrix:'⚔️', ultimatum:'⚖️', centipede:'🪜', repeated:'🔄'};
+const TYPE_LABEL = {matrix:'Matrix', ultimatum:'Ultimatum', centipede:'Centipede', repeated:'Repeated PD'};
+
+function openBrowse() {
+  buildBrowsePanel();
+  document.getElementById('browse-panel').classList.add('open');
+  document.getElementById('browse-overlay').classList.add('open');
+}
+
+function closeBrowse() {
+  document.getElementById('browse-panel').classList.remove('open');
+  document.getElementById('browse-overlay').classList.remove('open');
+}
+
+function buildBrowsePanel() {
+  const currentSI = STATE.order.length ? STATE.order[STATE.idx] : -1;
+  const doneSet = new Set(STATE.order.slice(0, STATE.idx));
+
+  // Group by category preserving insertion order
+  const groups = {};
+  SCENARIOS.forEach((s, i) => {
+    const cat = s.c || 'Other';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({s, i});
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([cat, items]) => {
+    html += `<div class="browse-cat">${cat}</div>`;
+    items.forEach(({s, i}) => {
+      const isCurrent = i === currentSI;
+      const isDone = doneSet.has(i);
+      html += `<div class="browse-item${isCurrent?' current':''}${isDone&&!isCurrent?' done':''}" onclick="jumpToScenario(${i})">
+        <span class="browse-icon">${TYPE_ICON[s.type]||'🎮'}</span>
+        <span class="browse-title">${s.t}</span>
+        <span class="browse-type">${TYPE_LABEL[s.type]||''}</span>
+      </div>`;
+    });
+  });
+  document.getElementById('browse-list').innerHTML = html;
+
+  // Scroll current item into view
+  const cur = document.querySelector('#browse-list .browse-item.current');
+  if (cur) cur.scrollIntoView({block:'center', behavior:'smooth'});
+}
+
+function jumpToScenario(scenarioIdx) {
+  closeBrowse();
+  // Ensure game screen is visible
+  if (!document.getElementById('game-screen').classList.contains('active')) {
+    showScreen('game-screen');
+  }
+  // If no order set yet, build a sequential one
+  if (!STATE.order.length) {
+    STATE.order = SCENARIOS.map((_, i) => i);
+    STATE.idx = 0;
+    STATE.score = 0; STATE.nashHits = 0; STATE.nashOpps = 0;
+    STATE.paretoHits = 0; STATE.paretoOpps = 0; STATE.cooperate = 0; STATE.defect = 0;
+  }
+  // Find position in current order, or insert at current index
+  let pos = STATE.order.indexOf(scenarioIdx);
+  if (pos === -1) {
+    // Splice it in at current position so Next Scenario still works
+    STATE.order.splice(STATE.idx, 0, scenarioIdx);
+    pos = STATE.idx;
+  }
+  STATE.idx = pos;
+  updateHeader();
+  // Animate transition
+  ['situation-box','game-area'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('fade-in');
+    void el.offsetWidth;
+    el.classList.add('fade-in');
+  });
+  renderScenario(SCENARIOS[scenarioIdx]);
+}
+
+function nextScenario() {
+  STATE.idx++;
+  if (STATE.idx >= SCENARIOS.length) { showEndScreen(); return; }
+  updateHeader();
+  const s = SCENARIOS[STATE.order[STATE.idx]];
+  document.getElementById('situation-box').classList.remove('fade-in');
+  void document.getElementById('situation-box').offsetWidth;
+  document.getElementById('situation-box').classList.add('fade-in');
+  document.getElementById('game-area').classList.remove('fade-in');
+  void document.getElementById('game-area').offsetWidth;
+  document.getElementById('game-area').classList.add('fade-in');
+  renderScenario(s);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showEndScreen() {
+  document.getElementById('progress-bar').style.width = '100%';
+  const paretoRate = STATE.paretoOpps ? Math.round((STATE.paretoHits / STATE.paretoOpps) * 100) : 0;
+  const pdTotal = STATE.cooperate + STATE.defect;
+  const coopRate = pdTotal ? Math.round((STATE.cooperate / pdTotal) * 100) : 50;
+
+  let profile, desc;
+  if (paretoRate >= 60 && coopRate >= 60) {
+    profile = 'Social Optimizer';
+    desc = 'You consistently reached outcomes that were best for both parties and cooperated in repeated games. You understand that individual and collective interests can align — and you found those moments.';
+  } else if (paretoRate >= 60 && coopRate < 40) {
+    profile = 'Efficient Opportunist';
+    desc = 'You landed on joint-optimal outcomes in one-shot games but defected in repeated play. You see the social optimum clearly — you just don\'t always choose it when defection pays more over time.';
+  } else if (paretoRate < 40 && coopRate >= 60) {
+    profile = 'Cooperative Idealist';
+    desc = 'You cooperated in repeated games but often missed the socially optimal outcome in one-shot scenarios. Good instincts, but the tension between being nice and being strategically precise tripped you up.';
+  } else if (paretoRate < 40 && coopRate < 40) {
+    profile = 'Rational Defector';
+    desc = 'You defected in repeated play and rarely reached joint-optimal outcomes. Individually rational — but you left a lot of value on the table that cooperation would have captured.';
+  } else {
+    profile = 'Adaptive Player';
+    desc = 'You adapted to context rather than playing one strategy. You hit the social optimum about half the time and cooperated situationally. Most real decision-makers look exactly like this.';
+  }
+
+  document.getElementById('profile-title').textContent = profile;
+  document.getElementById('profile-desc').textContent = desc;
+  document.getElementById('stat-total').textContent = STATE.score;
+  document.getElementById('stat-nash').textContent = paretoRate + '%';
+  document.getElementById('stat-coop').textContent = coopRate + '%';
+  showScreen('end-screen');
+}
+
+function resetGame() {
+  STATE.idx = 0; STATE.score = 0; STATE.nashHits = 0; STATE.nashOpps = 0;
+  STATE.paretoHits = 0; STATE.paretoOpps = 0; STATE.cooperate = 0; STATE.defect = 0;
+  showScreen('landing');
+}
+
+// ============================================================
+// SCENARIOS — populated below
+// ============================================================
+const SCENARIOS = [
+// ---- CLASSIC 2x2 (1-15) ----
+{type:"matrix",t:"Prisoner's Dilemma",c:"Classic",k:"Dominant Strategy",
+s:"You and a partner are arrested. You cannot communicate. Confess or stay silent? If both stay silent, minor charges. If one confesses, the confessor goes free while the other gets the full sentence. If both confess, both get heavy sentences.",
+rows:["Silent","Confess"],cols:["Silent","Confess"],p:"Partner",
+m:[[3,3],[0,5],[5,0],[1,1]],
+lo:[["1 yr sentence","1 yr sentence"],["5 yrs sentence","0 yrs (free)"],["0 yrs (free)","5 yrs sentence"],["3 yrs sentence","3 yrs sentence"]],
+n:[3],
+e:"(Confess,Confess) is the unique Nash equilibrium — Confess dominates Silent for both players regardless of what the other does. Yet both would be better off at (Silent,Silent). This is the core tragedy of the dilemma."},
+
+{type:"matrix",t:"Stag Hunt",c:"Classic",k:"Coordination Game",
+s:"Two hunters can each chase a stag (requires both) or a hare (can be caught alone). A stag feeds both for a week; a hare feeds only the hunter who caught it.",
+rows:["Hunt Stag","Hunt Hare"],cols:["Hunt Stag","Hunt Hare"],p:"Other Hunter",
+m:[[4,4],[0,2],[2,0],[2,2]],
+lo:[["Stag caught — full feast","Stag caught — full feast"],["No stag, no hare — empty","Hare caught — half ration"],["Hare caught — half ration","No stag, no hare — empty"],["Hare each — half ration","Hare each — half ration"]],
+n:[0,3],
+e:"Two Nash equilibria: (Stag,Stag) is Pareto superior but risky — it requires mutual trust. (Hare,Hare) is safe but leaves value on the table. This game is about whether trust and coordination overcome the fear of being exploited."},
+
+{type:"matrix",t:"Battle of the Sexes",c:"Classic",k:"Coordination with Conflict",
+s:"You want to spend the evening together but disagree on venue. You prefer the boxing match; your partner prefers the ballet. Being together matters more than the venue, but each of you prefers your favorite when together.",
+rows:["Boxing","Ballet"],cols:["Boxing","Ballet"],p:"Partner",
+m:[[3,2],[0,0],[0,0],[2,3]],
+lo:[["Together at boxing","Together at boxing"],["Alone — evening wasted","Alone — evening wasted"],["Alone — evening wasted","Alone — evening wasted"],["Together at ballet","Together at ballet"]],
+n:[0,3],
+e:"Two pure Nash equilibria exist — one favoring each player. Neither is obviously 'correct.' This is a pure coordination problem with conflicting preferences. Mixed strategy Nash also exists but is inefficient."},
+
+{type:"matrix",t:"Hawk-Dove",c:"Classic",k:"Evolutionary Stability",
+s:"Two animals compete for a resource worth V=4. A Hawk always fights; a Dove always retreats when Hawk attacks. Fighting costs C=6 if both are Hawks. Doves split the resource when both are Doves.",
+rows:["Hawk","Dove"],cols:["Hawk","Dove"],p:"Rival",
+m:[[0,0],[4,0],[0,4],[2,2]],
+lo:[["Both fight — injuries cancel out (net 0)","Both fight — injuries cancel out"],["Win full resource","Retreat — get nothing"],["Retreat — get nothing","Win full resource"],["Share resource: +2 each","Share resource: +2 each"]],
+n:[0,1,2],
+e:"No pure strategy Nash equilibrium where both play the same. The two asymmetric Nash equilibria are (Hawk,Dove) and (Dove,Hawk). In evolutionary biology, a mixed-strategy ESS emerges at V/C frequency of Hawks."},
+
+{type:"matrix",t:"Matching Pennies",c:"Classic",k:"Zero-Sum / Mixed Strategy",
+s:"Each player secretly places a penny heads or tails up. If they match, Player A wins both; if they differ, Player B wins both. A pure coordination game in reverse — you want to be unpredictable.",
+rows:["Heads","Tails"],cols:["Heads","Tails"],p:"Player B",
+m:[[1,0],[0,1],[0,1],[1,0]],
+lo:[["Win both pennies: +$2","Lose both pennies"],["Lose both pennies","Win both pennies: +$2"],["Lose both pennies","Win both pennies: +$2"],["Win both pennies: +$2","Lose both pennies"]],
+n:[],
+e:"No pure strategy Nash equilibrium exists. The unique Nash equilibrium is the mixed strategy: each player randomizes 50/50. Any predictable pattern gets exploited. This is why randomization matters in competitive settings."},
+
+{type:"matrix",t:"Deadlock",c:"Classic",k:"Dominant Strategy",
+s:"Two countries can maintain trade agreements or defect to protectionism. Unlike the Prisoner's Dilemma, here both players actually prefer mutual defection over mutual cooperation — the status quo is mutually bad for different reasons.",
+rows:["Cooperate","Defect"],cols:["Cooperate","Defect"],p:"Country B",
+m:[[1,1],[0,3],[3,0],[2,2]],
+lo:[["Agreement upheld — both constrained","Agreement upheld — both constrained"],["You comply, they defect — you're exposed","You defect, gain full autonomy"],["You defect, gain full autonomy","You comply, they defect — you're exposed"],["Both go protectionist — trade shrinks but both prefer it","Both go protectionist — trade shrinks but both prefer it"]],
+n:[3],
+e:"Defect dominates for both players, and the Nash equilibrium (Defect,Defect) is also Pareto efficient relative to the players' own preferences. Unlike PD, there's no tragedy here — the equilibrium IS what both want."},
+
+{type:"matrix",t:"Chicken Game",c:"Classic",k:"Anti-Coordination",
+s:"Two drivers race toward each other. Swerving is 'chicken.' Neither wants to swerve, but a head-on crash is worst of all. The one who swerves loses face; the one who holds loses everything if both hold.",
+rows:["Swerve","Hold"],cols:["Swerve","Hold"],p:"Other Driver",
+m:[[2,2],[1,4],[4,1],[0,0]],
+lo:[["Both swerve — tie","Both swerve — tie"],["You're 'chicken,' lose face","They swerve, you win face"],["They're 'chicken,' you win face","You swerve, lose face"],["Head-on crash — both lose","Head-on crash — both lose"]],
+n:[1,2],
+e:"Two pure Nash equilibria: (Swerve,Hold) and (Hold,Swerve). The tragedy is that rational players want to pre-commit to 'Hold' to force the other to swerve — hence why throwing your steering wheel out the window is a credible commitment device."},
+
+{type:"matrix",t:"Assurance Game",c:"Classic",k:"Trust and Assurance",
+s:"Two startups can build compatible software standards or go proprietary. If both build open standards, the market grows and both win big. If both go proprietary, they fragment the market. If one goes open while the other goes proprietary, the open one loses.",
+rows:["Open Standard","Proprietary"],cols:["Open Standard","Proprietary"],p:"Rival Startup",
+m:[[4,4],[1,3],[3,1],[2,2]],
+lo:[["Market expands — both grow","Market expands — both grow"],["Your users migrate to them","Closed eco, you keep users"],["Closed eco, you keep users","Your users migrate to them"],["Fragmented market — both shrink","Fragmented market — both shrink"]],
+n:[0,3],
+e:"Unlike Stag Hunt, (Open,Open) strictly dominates (Proprietary,Proprietary) for both players — mutual cooperation is the Pareto-dominant Nash equilibrium. The challenge is just assuring each other you will both cooperate."},
+
+{type:"matrix",t:"Pure Coordination",c:"Classic",k:"Focal Points",
+s:"You and a friend are separated in a city and must meet without communicating. You each independently choose a landmark. If you pick the same one, you meet. If not, you wander alone.",
+rows:["Central Station","City Hall"],cols:["Central Station","City Hall"],p:"Friend",
+m:[[5,5],[0,0],[0,0],[5,5]],
+lo:[["You meet at Station","You meet at Station"],["You miss — wander alone","You miss — wander alone"],["You miss — wander alone","You miss — wander alone"],["You meet at City Hall","You meet at City Hall"]],
+n:[0,3],
+e:"Both pure Nash equilibria are payoff-equivalent. The key concept here is Schelling's focal point — players coordinate on the most 'natural' or culturally salient option without communication. What the game matrix cannot capture is which equilibrium actually gets selected."},
+
+{type:"matrix",t:"Trust Game (Matrix Form)",c:"Classic",k:"Trust and Reciprocity",
+s:"An investor can Trust (send money to a trustee) or Not Trust. The trustee can Honor or Exploit. Trust creates surplus; exploitation destroys the relationship. In matrix form, both move simultaneously.",
+rows:["Trust","Don't Trust"],cols:["Honor","Exploit"],p:"Trustee",
+m:[[4,4],[0,5],[2,2],[2,2]],
+lo:[["$400 returned — both profit","$400 returned — good deal"],["$0 returned — you're robbed","You keep $500 — exploited the trust"],["No deal — $200 kept safe","No deal — no money to exploit"],["No deal — $200 kept safe","No deal — no money to exploit"]],
+n:[3],
+e:"The Nash equilibrium is (Don't Trust, Exploit) — but this is Pareto dominated by (Trust, Honor). This gap between equilibrium and efficiency is why trust institutions, contracts, and repeated interaction matter so much in practice."},
+
+{type:"matrix",t:"Entry Deterrence",c:"Classic",k:"Commitment and Threats",
+s:"An incumbent firm threatens to fight any new entrant with a price war. An entrant must decide whether to enter the market. The incumbent must decide whether to actually fight or accommodate.",
+rows:["Enter","Stay Out"],cols:["Fight","Accommodate"],p:"Incumbent",
+m:[[1,1],[3,3],[2,4],[2,4]],
+lo:[["Enter, face price war — thin margins for both","Fight entrant — destroys own margins too"],["Enter, not fought — share the market profitably","Accommodate entrant — lose some share, keep margins"],["Stay out — no revenue from this market","No entry, keep full monopoly margins"],["Stay out — status quo","No entrant to deal with — monopoly intact"]],
+n:[1,2],
+e:"If entry happens, accommodation is better for the incumbent than fighting — making the threat to fight non-credible. The entrant anticipates this. (Enter,Accommodate) is Nash. The incumbent needs a credible commitment (sunk cost investment, reputation) to make the threat believable."},
+
+{type:"matrix",t:"Public Goods Dilemma",c:"Classic",k:"Free Rider Problem",
+s:"Two neighbors decide whether to contribute to a shared garden. The garden benefits both regardless of who paid. Contributing costs you effort; free-riding is tempting since the other person's contribution benefits you anyway.",
+rows:["Contribute","Free Ride"],cols:["Contribute","Free Ride"],p:"Neighbor",
+m:[[3,3],[1,4],[4,1],[0,0]],
+lo:[["Nice garden, shared cost","Nice garden, shared cost"],["Garden exists, you paid everything","Free — you get the benefit"],["Free — you get the benefit","Garden exists, you paid everything"],["No garden — both lose out","No garden — both lose out"]],
+n:[1,2],
+e:"(Free Ride, Free Ride) is the dominant strategy Nash equilibrium. Both players are better off free-riding regardless of what the other does. This is why public goods are underprovided in unregulated settings — the social optimum requires coordination or coercion."},
+
+{type:"matrix",t:"Volunteer's Dilemma",c:"Classic",k:"Diffusion of Responsibility",
+s:"A dangerous situation requires one person to volunteer (at personal cost) for the group to benefit. Everyone hopes someone else will step up. If nobody volunteers, everyone suffers.",
+rows:["Volunteer","Wait"],cols:["Volunteer","Wait"],p:"Other Person",
+m:[[2,3],[2,3],[3,2],[0,0]],
+lo:[["You volunteer — bear cost, group is saved","Group saved — you also volunteered"],["You volunteer — bear cost, group is saved","Group saved — you waited, paid nothing"],["They volunteer, you free-ride — group saved","You volunteer — bear cost, they free-ride"],["Nobody steps up — crisis hits everyone","Nobody steps up — crisis hits everyone"]],
+n:[1,2],
+e:"Multiple Nash equilibria: any outcome where at least one person volunteers. The social dilemma is that each person prefers to free-ride on the other's volunteering. As group size increases, the probability that any one person volunteers drops — the bystander effect has a game-theoretic foundation."},
+
+{type:"matrix",t:"Evolutionarily Stable Defection",c:"Classic",k:"Evolutionary Game Theory",
+s:"In a biological population, organisms play either Cooperator or Defector strategies. Cooperators benefit the group at personal cost; Defectors take without giving. Payoffs represent reproductive fitness.",
+rows:["Cooperator","Defector"],cols:["Cooperator","Defector"],p:"Random Opponent",
+m:[[3,3],[0,4],[4,0],[1,1]],
+lo:[["Both cooperate — group thrives","Both cooperate — group thrives"],["You give, they take — you starve","Exploits you: +4 fitness"],["You exploit them: +4 fitness","You give, they take — you starve"],["Both defect — low fitness","Both defect — low fitness"]],
+n:[3],
+e:"Defection dominates cooperation in a single-shot interaction — this is the evolutionary version of PD. Cooperators can only survive through kin selection, reciprocity, or group selection. This is why social species evolved enforcement mechanisms like punishment and reputation."},
+
+{type:"matrix",t:"Arms Race",c:"Classic",k:"Security Dilemma",
+s:"Two rival nations each decide whether to increase military spending. Both would prefer mutual restraint, but neither can afford to be the only one who disarms. Building up feels safer regardless of what the other does.",
+rows:["Build Up","Restrain"],cols:["Build Up","Restrain"],p:"Rival Nation",
+m:[[1,1],[4,0],[0,4],[3,3]],
+lo:[["Both arm — mutual threat, budget drained","Both arm — mutual threat, budget drained"],["You arm, they restrain — strategic edge","You restrain, they arm — you're exposed"],["You restrain, they arm — you're exposed","You arm, they restrain — strategic edge"],["Both restrain — stable peace, budgets intact","Both restrain — stable peace, budgets intact"]],
+n:[0],
+e:"(Build Up, Build Up) is the dominant strategy Nash equilibrium — a classic security dilemma. Both nations end up spending more and feeling no safer. Arms control treaties are mechanisms to escape this trap by verifying mutual restraint."},
+
+// ---- CLASSIC 2x2 continued & BUSINESS 2x2 (16-30) ----
+{type:"matrix",t:"Price War",c:"Business",k:"Bertrand Competition",
+s:"Two competing airlines set fares for the same route. Both can charge high or cut to low fares. If both cut, margins collapse. If both hold high, profits are fat. But the one who cuts while the other holds steals the whole market.",
+rows:["High Fare","Cut Fare"],cols:["High Fare","Cut Fare"],p:"Rival Airline",
+m:[[4,4],[0,5],[5,0],[1,1]],
+lo:[["$400/seat margin — split market","$400/seat margin — split market"],["You hold high — lose all passengers","You cut — win 100% of route"],["100% of passengers — full route","You hold high — lose all passengers"],["$100/seat margin — race to bottom","$100/seat margin — race to bottom"]],
+n:[3],
+e:"Classic Bertrand price competition. (Cut,Cut) is Nash even though (High,High) is Pareto superior. The temptation to undercut while the other holds high drives prices to the competitive equilibrium. Collusion could escape this but violates antitrust law."},
+
+{type:"matrix",t:"Product Launch Timing",c:"Business",k:"First Mover vs. Fast Follower",
+s:"Two tech companies are racing to launch a product. Launching early captures the market but risks shipping bugs. Waiting lets you polish the product but cedes first-mover advantage if the rival launches first.",
+rows:["Launch Now","Wait"],cols:["Launch Now","Wait"],p:"Rival Firm",
+m:[[2,2],[4,1],[1,4],[3,3]],
+lo:[["Both launch buggy — split market, bad reviews","Both launch buggy — split market, bad reviews"],["You launch first — capture full market, rough product","Polished product, no market left for you"],["Polished product, but no market left for you","You launch first — full market, rough product"],["Both wait — polished products, split market fairly","Both wait — polished products, split market fairly"]],
+n:[0],
+e:"Two Nash equilibria: both launch now (race to market, moderate outcome) or both wait (better products, better outcome). If both wait, first mover advantage disappears and quality wins. The problem is each firm is tempted to launch first while the other waits."},
+
+{type:"matrix",t:"R&D Investment Race",c:"Business",k:"Patent Race",
+s:"Two pharmaceutical firms decide whether to invest heavily in R&D for a new drug. The first to patent wins the market exclusively. But heavy R&D spending is costly, and only one can win the patent.",
+rows:["Invest Heavily","Invest Moderately"],cols:["Invest Heavily","Invest Moderately"],p:"Rival Pharma",
+m:[[1,0],[3,1],[0,3],[2,2]],
+lo:[["Both spend big — costly tie, neither wins cleanly","Both spend big — costly tie"],["You invest heavy, they go moderate — you win patent","You invest moderately — they beat you to the patent"],["You go moderate, they invest heavy — they win patent","You invest heavily — beat them to the patent"],["Both moderate — shared slower race, no monopoly","Both moderate — shared slower race, no monopoly"]],
+n:[1],
+e:"Two Nash equilibria exist but they're asymmetric. The patent race drives both firms to over-invest from a social standpoint — duplicating R&D efforts that only one will use. This is the classic rent dissipation problem in innovation competition."},
+
+{type:"matrix",t:"Ad Spending War",c:"Business",k:"Advertising as Prisoner's Dilemma",
+s:"Two consumer goods companies decide how much to spend on advertising. Heavy advertising by both cancels out — market shares stay the same but costs are higher. Yet each fears losing share if the other advertises while they don't.",
+rows:["Advertise Heavily","Advertise Lightly"],cols:["Advertise Heavily","Advertise Lightly"],p:"Rival Brand",
+m:[[2,2],[4,0],[0,4],[3,3]],
+lo:[["Both spend heavily — same share, -$20M each","Both spend heavily — same share, -$20M each"],["You advertise, they don't — you gain 10pt share","They advertise heavily, you don't — you lose share"],["They advertise, you don't — you lose 10pt share","You advertise heavily, they don't — you gain share"],["Both spend lightly — same share, -$5M each","Both spend lightly — same share, -$5M each"]],
+n:[0],
+e:"(Heavy,Heavy) is the dominant strategy Nash equilibrium. Both firms spend heavily and end up no better off in market share — a pure waste from industry perspective. This is why industry-level advertising bans (like cigarette TV ads) can make all firms better off."},
+
+{type:"matrix",t:"Negotiation: Anchoring",c:"Business",k:"Bargaining and First Offers",
+s:"You and a supplier negotiate on price. You can anchor high (aggressive opening) or anchor moderate (cooperative signal). The supplier can counter low or counter moderate. The outcome depends on both anchoring strategies.",
+rows:["Anchor High","Anchor Moderate"],cols:["Counter Low","Counter Moderate"],p:"Supplier",
+m:[[2,3],[4,1],[1,4],[3,3]],
+lo:[["Aggressive vs aggressive — standoff, slow deal","They counter low vs your high — they hold ground"],["You anchor high, they counter moderate — deal favors you","You counter moderate — they anchored high, they gain the spread"],["You anchor moderate, they counter low — deal favors them","You counter low — they anchor moderate, you gain the spread"],["Both moderate — deal reached, fair split","Both moderate — deal reached, fair split"]],
+n:[0],
+e:"(Moderate,Moderate) is the Nash equilibrium in this simplified model. Aggressive anchoring invites aggressive counters; moderate anchoring signals willingness to deal. In real negotiations, the credibility of your anchor matters as much as its value."},
+
+{type:"matrix",t:"Merger vs. Compete",c:"Business",k:"Horizontal Integration",lo:[["Merger complete — scale economies captured","Merger complete — scale economies captured"],["You commit, they reject — integration costs sunk","You compete — they committed to merge, exploit their vulnerability"],["You stay independent, stronger position","You commit to merge — they compete, you bear integration costs"],["Both compete independently — fragmented market, eroded margins","Both compete independently — fragmented market, eroded margins"]],
+s:"Two regional banks consider merging or staying independent and competing aggressively. A merger creates scale efficiencies but faces regulatory scrutiny. Competition erodes margins. Both together would dominate, but the merger takes time and political capital.",
+rows:["Merge","Compete"],cols:["Merge","Compete"],p:"Rival Bank",
+m:[[4,4],[1,3],[3,1],[2,2]],n:[0,3],
+e:"Two Nash equilibria. The game has the structure of an Assurance Game — cooperation (merger) is Pareto dominant, but requires both sides to commit. Regulatory uncertainty and integration risk can shift firms toward the (Compete,Compete) equilibrium even when merger is mutually beneficial."},
+
+{type:"matrix",t:"Platform Compatibility",c:"Business",k:"Network Effects",lo:[["Mutual compatibility — market grows for both","Mutual compatibility — market grows for both"],["You open up, they wall off — they capture your users","You go proprietary — capture users from their open platform"],["You wall off — you capture users from their open platform","You go open — they wall off, capture your users"],["Both proprietary — fragmented market, limited adoption","Both proprietary — fragmented market, limited adoption"]],
+s:"Two software companies each choose whether to make their platforms compatible or walled-garden proprietary. Compatibility grows the overall market; proprietary locks in customers. If one opens and the other walls, the open platform often loses users to the closed one that benefits from both.",
+rows:["Open/Compatible","Proprietary"],cols:["Open/Compatible","Proprietary"],p:"Rival Platform",
+m:[[4,4],[1,4],[4,1],[2,2]],n:[0,3],
+e:"(Open,Open) Pareto dominates but (Proprietary,Proprietary) is also Nash because unilateral openness gets exploited. Network effects amplify this — the closed platform extracts value from the open one's ecosystem. This explains why platform battles often end with one closed winner."},
+
+{type:"matrix",t:"Labor Negotiation",c:"Business",k:"Bargaining Power",lo:[["Both hold firm — talks collapse, strike begins","Both hold firm — talks collapse, strike begins"],["You hold firm, they compromise — deal on your terms","You compromise — they hold firm, deal favors them"],["You compromise, they hold firm — deal on their terms","You hold firm — they compromise, deal favors you"],["Both flexible — efficient deal, fair outcome for both","Both flexible — efficient deal, fair outcome for both"]],
+s:"Management and union each choose a stance: Hard Line (demand maximum) or Flexible (compromise). If both go hard line, talks break down and a strike happens. If both are flexible, a deal gets made. Asymmetric stances favor the harder party.",
+rows:["Hard Line","Flexible"],cols:["Hard Line","Flexible"],p:"Union/Management",
+m:[[0,0],[2,3],[3,2],[3,3]],n:[3],
+e:"Multiple Nash equilibria including the cooperative outcome. The strike (Hard,Hard) is the worst outcome for both. The challenge is that both parties benefit from signaling toughness initially while ultimately needing to find the flexible equilibrium."},
+
+{type:"matrix",t:"Market Entry: Niche vs. Mass",c:"Business",k:"Product Differentiation",lo:[["Both go premium niche — crowded, thin margins","Both go premium niche — crowded, thin margins"],["You go niche, they go mass — differentiated, strong margins for both","You go mass — they go niche, both thrive in separate segments"],["You go mass, they go niche — differentiated, both do well","You go niche — they go mass, both thrive in separate segments"],["Both go mass market — high volume, commoditized margins","Both go mass market — high volume, commoditized margins"]],
+s:"Two new consumer goods companies each choose to target the niche premium market or the mass market. The mass market is bigger but more crowded; the niche rewards differentiation. Same-segment competition is destructive.",
+rows:["Niche Premium","Mass Market"],cols:["Niche Premium","Mass Market"],p:"Rival Brand",
+m:[[1,1],[4,3],[3,4],[2,2]],n:[1,2],
+e:"Two Nash equilibria where firms differentiate: (Niche,Mass) and (Mass,Niche). Head-to-head competition in the same segment destroys margins. Hotelling's model predicts firms will differentiate in product space for exactly this reason."},
+
+{type:"matrix",t:"Supply Chain: Make or Buy",c:"Business",k:"Vertical Integration",lo:[["Both integrate — duplicate capabilities, wasted investment","Both integrate — duplicate capabilities, wasted investment"],["You make, they buy from you — efficient specialization","You buy from them — efficient, they supply you"],["You buy from them — efficient, they supply you","You make — they buy from you, efficient specialization"],["Both outsource — nobody makes the component, supply gap","Both outsource — supply gap, no one produces the part"]],
+s:"Two companies in the same supply chain each decide whether to vertically integrate (make the component themselves) or outsource to each other. If both integrate, they duplicate capabilities. If both outsource, nobody makes the component.",
+rows:["Integrate (Make)","Outsource (Buy)"],cols:["Integrate (Make)","Outsource (Buy)"],p:"Supply Chain Partner",
+m:[[2,2],[4,3],[3,4],[0,0]],n:[1,2],
+e:"The two Nash equilibria are the anti-coordination outcomes: one integrates while the other outsources. Mutual integration wastes resources; mutual outsourcing creates a gap. The game predicts specialization, but the question of who integrates and who outsources often requires negotiation."},
+
+{type:"matrix",t:"Innovation: Open Source vs. Proprietary",c:"Business",k:"IP Strategy",lo:[["Both open — shared ecosystem, mutual contributions","Both open — shared ecosystem, mutual contributions"],["You open, they stay proprietary — they benefit from your code","You stay proprietary — exploit their open codebase"],["You stay proprietary, benefit from their open code","You open — they exploit your code"],["Both proprietary — separate silos, limited ecosystem adoption","Both proprietary — separate silos, limited adoption"]],
+s:"A tech company decides whether to open-source its core technology or keep it proprietary. A potential partner makes the same choice. Open-sourcing builds ecosystem but surrenders control; proprietary protects margins but limits adoption.",
+rows:["Open Source","Proprietary"],cols:["Open Source","Proprietary"],p:"Tech Partner",
+m:[[4,4],[2,3],[3,2],[2,2]],n:[0,3],
+e:"Two Nash equilibria: both open (ecosystem wins, both benefit from contributions) or both proprietary (limited but protected). When both go open, neither wants to defect to proprietary — ecosystem value exceeds the IP advantage. When both go proprietary, neither gains from unilateral openness. Many tech firms use hybrid strategies: open the standard, monetize the implementation."},
+
+{type:"matrix",t:"Bidding on Contract",c:"Business",k:"Common Value Auction",lo:[["Both bid low — contract awarded, margins collapse for winner","Both bid low — margins collapse for winner"],["You win with low bid — full contract, wafer-thin margin","You lose to their lower bid — no contract, no revenue"],["You lose to their lower bid — no contract","You win with low bid — full contract, thin margin"],["Both bid conservatively — implicit coordination, healthy margins","Both bid conservatively — healthy margins for whoever wins"]],
+s:"You and a rival firm are bidding on a government contract. You can bid aggressively (low price, thin margin) or bid conservatively (higher price, better margin). Lowest bid wins the whole contract. Both bidding conservatively implies implicit coordination.",
+rows:["Bid Aggressively","Bid Conservatively"],cols:["Bid Aggressively","Bid Conservatively"],p:"Rival Firm",
+m:[[1,1],[4,0],[0,4],[3,3]],n:[0],
+e:"Aggressive bidding is the dominant strategy Nash equilibrium — a direct parallel to Bertrand price competition. If you bid conservatively, the rival undercuts and wins the whole contract. When both bid aggressively, margins collapse and both lose. (Conservative,Conservative) produces the best joint outcome but is unstable: each firm has a unilateral incentive to undercut. This is why antitrust authorities watch procurement markets closely."},
+
+{type:"matrix",t:"Talent Poaching",c:"Business",k:"Tournament Theory",lo:[["Both recruit aggressively — salaries bid up, no net talent gain","Both recruit aggressively — salaries bid up, no net talent gain"],["You recruit hard, they don't — you win top engineers","You hold back — they poach your best people"],["They recruit hard, you hold back — they poach your best engineers","You recruit hard — poach their best people"],["Both restrain — stable teams, no wage inflation","Both restrain — stable teams, no wage inflation"]],
+s:"Two tech firms both raid each other's engineers with aggressive offers. If one recruits hard while the other doesn't, they win top talent. If both recruit aggressively, they cancel out and only raise the market wage floor.",
+rows:["Recruit Aggressively","Restrain"],cols:["Recruit Aggressively","Restrain"],p:"Rival Firm",
+m:[[2,2],[4,1],[1,4],[3,3]],n:[0],
+e:"(Aggressive,Aggressive) is the dominant strategy Nash equilibrium. Both firms over-invest in recruiting and salaries rise without either gaining a net talent advantage — rent is dissipated. No-poach agreements solve this but are illegal in most jurisdictions."},
+
+{type:"matrix",t:"Retail Location: Cluster or Spread",c:"Business",k:"Hotelling's Spatial Competition",lo:[["Both cluster downtown — heavy foot traffic, split 50/50","Both cluster downtown — heavy traffic, split 50/50"],["You downtown, they suburbs — separate zones, both profitable","You suburbs, they downtown — separate zones, both profitable"],["You suburbs, they downtown — separate zones, both profitable","You downtown, they suburbs — separate zones, both profitable"],["Both spread to suburbs — separate neighborhoods, moderate traffic","Both spread to suburbs — moderate traffic, separate zones"]],
+s:"Two coffee shops choose locations in a city. Both can cluster downtown (max foot traffic, but split customers) or spread out (capture separate neighborhoods with less competition). Hotelling's principle applies.",
+rows:["Cluster Downtown","Spread Out"],cols:["Cluster Downtown","Spread Out"],p:"Rival Coffee Shop",
+m:[[2,2],[3,3],[3,3],[2,2]],n:[1,2],
+e:"Each firm prefers to be in a different zone from the other — anti-coordination equilibrium. Spreading out maximizes combined coverage but each shop is tempted to move toward the other's customer base. The tension between differentiation and competition drives real retail location decisions."},
+
+{type:"matrix",t:"ESG Disclosure",c:"Business",k:"Signaling and Credibility",lo:[["Both disclose — level playing field, investor trust built","Both disclose — level playing field, investor trust built"],["You disclose, they withhold — you expose IP, they stay opaque","You withhold — benefit from opacity while they're transparent"],["You withhold, they disclose — you keep IP edge","You disclose — they withhold, benefit from your transparency"],["Both withhold — investors starved of data, regulatory risk grows","Both withhold — investors starved of data, regulatory risk grows"]],
+s:"Two publicly traded competitors both consider voluntary ESG disclosures beyond legal requirements. Early, detailed disclosure builds trust with investors but reveals competitive information. If one discloses and the other doesn't, the non-discloser captures the opaqueness benefit while looking no worse.",
+rows:["Disclose Fully","Minimal Disclosure"],cols:["Disclose Fully","Minimal Disclosure"],p:"Rival Corp",
+m:[[3,3],[1,4],[4,1],[2,2]],n:[3],
+e:"(Minimal,Minimal) is the Nash equilibrium — non-disclosure is the dominant strategy. Disclosing while the other stays quiet surrenders competitive information without a commensurate benefit. This is why mandatory disclosure frameworks exist: voluntary ESG disclosure is a prisoner's dilemma where the individually rational equilibrium underproduces information the market needs."},
+
+// ---- SOCIAL DILEMMAS 2x2 (31-38) ----
+{type:"matrix",t:"Tragedy of the Commons",c:"Social Dilemmas",k:"Common Resource Extraction",lo:[["Both sustainable — fish stock healthy, long-term yield","Both sustainable — fish stock healthy, long-term yield"],["You conserve, they max — they take your share of the stock","You over-harvest, they conserve — you outcompete them"],["You max, they conserve — you take their share of the stock","You conserve — they over-harvest, outcompete you"],["Both max harvest — stock degrades, yields fall next season","Both max harvest — stock degrades, yields fall next season"]],
+s:"Two fishing crews share the same fishing ground. Each decides to fish at sustainable or maximum rates. The fish population can only sustain so much harvest. If both over-fish, the stock degrades and yields fall — but not immediately to zero.",
+rows:["Sustainable","Maximum Harvest"],cols:["Sustainable","Maximum Harvest"],p:"Other Crew",
+m:[[4,4],[1,5],[5,1],[2,2]],n:[3],
+e:"(Maximum,Maximum) is the dominant strategy Nash equilibrium — over-fishing is individually rational regardless of what the other crew does. The tragedy is that (Sustainable,Sustainable) produces more for both. Hardin's solutions: privatize the commons, regulate extraction, or build community governance (Ostrom showed this last one works when communities have the right institutional conditions)."},
+
+{type:"matrix",t:"Climate Commitment",c:"Social Dilemmas",k:"Global Public Goods",
+s:"Two large economies decide whether to commit to costly emissions reductions. Clean air is a global public good — even a non-reducer benefits from the other's sacrifice. Reducing is expensive; not reducing and letting the other carry the cost is tempting.",
+rows:["Reduce Emissions","Free Ride"],cols:["Reduce Emissions","Free Ride"],p:"Other Economy",
+lo:[["Both cut emissions — global temperature trajectory improves","Both cut emissions — global temperature trajectory improves"],
+    ["You absorb full reduction cost — they get the climate benefit free","You free-ride — zero cost, full benefit from their sacrifice"],
+    ["You free-ride — zero cost, full benefit from their sacrifice","You absorb full reduction cost — they free-ride on your sacrifice"],
+    ["Both free-ride — emissions continue, climate costs accumulate for all","Both free-ride — emissions continue, climate costs accumulate for all"]],
+m:[[4,4],[1,5],[5,1],[2,2]],n:[3],
+e:"(Free Ride, Free Ride) is Nash, though (Reduce,Reduce) is Pareto superior. Climate negotiations are a multi-player version of this game. The Paris Agreement uses a pledge-and-review mechanism to escape the free-rider trap — imperfect, but shifts the equilibrium."},
+
+{type:"matrix",t:"Recycling and Social Norms",c:"Social Dilemmas",k:"Social Norms and Compliance",
+s:"You and your neighbor decide whether to sort recycling properly (costly effort) or bin everything together (lazy but cheaper). The recycling program works only if enough people participate. Social shame and environmental benefit are in play.",
+rows:["Sort Properly","Bin Everything"],cols:["Sort Properly","Bin Everything"],p:"Neighbor",
+lo:[["Both sort — recycling program works, civic norm upheld","Both sort — recycling program works, civic norm upheld"],
+    ["You sort carefully — they contaminate the bin anyway, your effort wasted","You bin everything — recycling rate falls, program fails"],
+    ["They sort carefully — you contaminate the bin, they carry the effort","You sort — they bin everything, your effort wasted"],
+    ["Both bin everything — apathy equilibrium, recycling fails","Both bin everything — apathy equilibrium, recycling fails"]],
+m:[[4,4],[1,3],[3,1],[2,2]],n:[0,3],
+e:"Two Nash equilibria: (Sort,Sort) — the civic norm — and (Bin,Bin) — the apathy equilibrium. When both sort, neither wants to deviate: the effort is worth it when participation is high. When both bin, sorting alone wastes your effort with no social recognition. Visible participation data, fines, and transparent bin labels all shift communities toward the (Sort,Sort) equilibrium."},
+
+{type:"matrix",t:"Vaccine Hesitancy",c:"Social Dilemmas",k:"Herd Immunity Free Riding",
+s:"You decide whether to vaccinate. If enough others vaccinate, herd immunity protects even the unvaccinated. Vaccination has small personal risk; free-riding works until vaccination rates drop below threshold and outbreaks return.",
+rows:["Vaccinate","Don't Vaccinate"],cols:["Vaccinate","Don't Vaccinate"],p:"Community Member",
+lo:[["Both vaccinated — herd immunity threshold met, disease suppressed","Both vaccinated — herd immunity threshold met, disease suppressed"],
+    ["You vaccinate, bear small risk — they free-ride on your immunity","You skip the shot — protected by their immunity, zero personal risk"],
+    ["They vaccinate, bear small risk — you free-ride on their immunity","You vaccinate — bear small risk, they free-ride on your immunity"],
+    ["Neither vaccinated — outbreak risk rises, both exposed","Neither vaccinated — outbreak risk rises, both exposed"]],
+m:[[3,3],[2,4],[4,2],[0,0]],n:[1,2],
+e:"The two Nash equilibria are asymmetric: one person vaccinates while the other free-rides. When you vaccinate and the other doesn't, neither wants to switch — you're bearing the cost but the other is already protected by your immunity, and they'd suffer if they switched to vaccinate. This captures the free-rider logic. At population scale, this produces systematic under-vaccination — each individual rationally prefers someone else to bear the cost."},
+
+{type:"matrix",t:"Noise Complaint",c:"Social Dilemmas",k:"Coase Theorem",
+s:"Two apartment neighbors decide whether to keep noise down after 10pm. Each values quiet sleep and the ability to host parties. The Coase Theorem says they could negotiate efficiently — but transaction costs and spite get in the way.",
+rows:["Keep Quiet","Make Noise"],cols:["Keep Quiet","Make Noise"],p:"Neighbor",
+lo:[["Both quiet after 10pm — everyone sleeps, building peaceful","Both quiet after 10pm — everyone sleeps, building peaceful"],
+    ["You keep it down — they blast music, you lose sleep","You host till 2am — they suffer, you party"],
+    ["You host till 2am — they suffer, you party","You keep it down — they blast music, you lose sleep"],
+    ["Both noisy — building in chaos, everyone loses sleep","Both noisy — building in chaos, everyone loses sleep"]],
+m:[[4,4],[1,3],[3,1],[2,2]],n:[0,3],
+e:"Two Nash equilibria: (Quiet,Quiet) — the cooperative norm — and (Noise,Noise) — the spite equilibrium. Coase argued that without transaction costs, neighbors would negotiate to the efficient outcome. In practice, HOAs, building rules, and noise ordinances substitute for those missing negotiations by coordinating on the (Quiet,Quiet) equilibrium."},
+
+{type:"matrix",t:"Tipping Culture",c:"Social Dilemmas",k:"Conventions and Reciprocity",
+s:"You're at a restaurant. You can tip generously (social norm upheld) or tip nothing (save money). If everyone tips, servers earn livable wages and service quality stays high. If tipping collapses as a norm, the whole system shifts.",
+rows:["Tip Generously","Don't Tip"],cols:["Tip Generously","Don't Tip"],p:"Other Diner",
+lo:[["Both tip — servers earn fairly, service quality sustained","Both tip — servers earn fairly, service quality sustained"],
+    ["You tip, they pocket the savings — you're the sucker upholding a norm alone","They pay nothing — you subsidize wages while they save the money"],
+    ["They tip, you pocket the savings — they uphold the norm, you free-ride","You pay nothing — they subsidize wages while you save the money"],
+    ["Neither tips — servers underpaid, norm collapses, service degrades","Neither tips — servers underpaid, norm collapses, service degrades"]],
+m:[[3,3],[1,2],[2,1],[2,2]],n:[0,3],
+e:"Two Nash equilibria: the tipping norm (Tip,Tip) and the no-tipping norm (No,No). Countries differ in which equilibrium they've landed on. Once a norm collapses, no individual has incentive to unilaterally restore it — tipping when nobody else does makes you the sucker. This is why tipping culture is surprisingly stable within a country and surprisingly hard to import."},
+
+{type:"matrix",t:"Mask-Wearing Externality",c:"Social Dilemmas",k:"Negative Externality",
+s:"During flu season, each person chooses whether to wear a mask. Masks protect others more than the wearer. If everyone masks, transmission drops significantly. Individual benefit is low; collective benefit is high.",
+rows:["Mask Up","No Mask"],cols:["Mask Up","No Mask"],p:"Commuter",
+lo:[["Both mask — transmission drops, shared protection","Both mask — transmission drops, shared protection"],
+    ["You mask and protect them — they impose infection risk on you","You go bare-faced — full convenience, they bear the protection cost"],
+    ["They mask and protect you — you impose infection risk on them","You mask — protect them, they impose infection risk on you"],
+    ["Neither masks — transmission spreads freely, each keeps personal convenience","Neither masks — transmission spreads freely, each keeps personal convenience"]],
+m:[[3,3],[1,4],[4,1],[2,2]],n:[3],
+e:"(No Mask, No Mask) is Nash — each individual rationally prefers not to bear the personal cost even though mutual masking improves collective outcomes. This is a negative externality problem: your choice imposes costs on others. Mandates or social pressure can shift the equilibrium."},
+
+{type:"matrix",t:"Data Privacy Sharing",c:"Social Dilemmas",k:"Information Commons",
+s:"Two hospitals decide whether to share anonymized patient data for medical research. Sharing contributes to collective knowledge but risks patient trust. If neither shares, research stalls. If both share, breakthroughs happen faster.",
+rows:["Share Data","Withhold"],cols:["Share Data","Withhold"],p:"Rival Hospital",
+lo:[["Both share — research accelerates, treatment breakthroughs come faster","Both share — research accelerates, treatment breakthroughs come faster"],
+    ["You share your patient data — they benefit from it, contribute nothing back","You withhold — benefit from their data, give nothing back"],
+    ["They share their patient data — you benefit from it, contribute nothing back","You share — they withhold and use your data, give nothing back"],
+    ["Neither shares — research stalls, patients wait longer for answers","Neither shares — research stalls, patients wait longer for answers"]],
+m:[[4,4],[1,3],[3,1],[2,2]],n:[0,3],
+e:"Two Nash equilibria. (Share,Share) produces the best social outcome. (Withhold,Withhold) is individually rational when data-sharing risks are high and competitor benefit feels asymmetric. This is why medical data consortia with governance structures outperform pure market mechanisms."},
+
+// ---- INTERNATIONAL RELATIONS 2x2 (39-43) ----
+{type:"matrix",t:"Nuclear Deterrence",c:"Int'l Relations",k:"Mutual Assured Destruction",
+s:"Two nuclear powers each decide whether to launch a first strike or maintain deterrence. If neither strikes, peace holds. If both strike, civilization ends. If one strikes first, that nation might gain advantage — but triggers retaliation.",
+rows:["Maintain Deterrence","First Strike"],cols:["Maintain Deterrence","First Strike"],p:"Rival Power",
+lo:[["Both deter — peace holds, MAD keeps the equilibrium stable","Both deter — peace holds, MAD keeps the equilibrium stable"],
+    ["You deter — they strike first, you absorb catastrophic losses","You launch first — first-strike advantage, retaliation incoming"],
+    ["You launch first — temporary advantage sought, retaliation incoming","You deter — they strike first, you absorb losses before counter-strike"],
+    ["Both launch — mutual annihilation, civilization ends","Both launch — mutual annihilation, civilization ends"]],
+m:[[4,4],[0,3],[3,0],[0,0]],n:[0,3],
+e:"Two Nash equilibria: (Deterrence,Deterrence) — peace — and (Strike,Strike) — mutual annihilation. MAD works by making the peace equilibrium self-enforcing: if the other is deterring, your best move is also to deter. The war equilibrium is also Nash because if the other is striking, you're indifferent (payoff 0 either way). Preserving second-strike capability is what keeps the peace equilibrium credible."},
+
+{type:"matrix",t:"Trade War Escalation",c:"Int'l Relations",k:"Tariff Retaliation",
+s:"Two trading nations each decide whether to impose tariffs or maintain free trade. Tariffs protect domestic industries at the cost of higher prices and retaliatory tariffs. Free trade maximizes efficiency but leaves import-competing industries exposed.",
+rows:["Free Trade","Impose Tariffs"],cols:["Free Trade","Impose Tariffs"],p:"Trade Partner",
+lo:[["Both maintain free trade — maximum efficiency, both economies benefit","Both maintain free trade — maximum efficiency, both economies benefit"],
+    ["Your markets open — they protect domestic industries with tariffs","Your tariffs give you an edge — their export sectors take the hit"],
+    ["You protect domestic industries with tariffs — their markets stay open","Your markets stay open — their tariffs give them the edge"],
+    ["Both impose tariffs — trade war, consumer prices rise, growth slows","Both impose tariffs — trade war, consumer prices rise, growth slows"]],
+m:[[4,4],[1,5],[5,1],[2,2]],n:[3],
+e:"(Tariff,Tariff) is Nash — a trade war where both economies lose relative to free trade. WTO dispute mechanisms and trade agreements are institutions designed to sustain (Free Trade,Free Trade) by making tariff escalation costly through retaliation commitments."},
+
+{type:"matrix",t:"Sanctions Regime",c:"Int'l Relations",k:"Coalition Maintenance",
+s:"Two allied countries decide whether to maintain economic sanctions on a third country or defect for economic gain. Sanctions only work if the coalition holds. Each ally is tempted by lucrative trade with the sanctioned party.",
+rows:["Hold Sanctions","Defect"],cols:["Hold Sanctions","Defect"],p:"Allied Country",
+lo:[["Both hold — coalition intact, sanctions maintain pressure on target","Both hold — coalition intact, sanctions maintain pressure on target"],
+    ["You hold the line — they trade with the sanctioned party, gain economic profit","You defect and profit — coalition cracks, their sacrifice achieves nothing"],
+    ["You trade with the sanctioned party — they hold, you pocket the gain","You hold the line — they defect and profit, your sacrifice achieves nothing"],
+    ["Both defect — sanctions collapse, target regime faces no real pressure","Both defect — sanctions collapse, target regime faces no real pressure"]],
+m:[[3,3],[0,4],[4,0],[1,1]],n:[3],
+e:"(Defect,Defect) is Nash. Coalition maintenance requires credible punishment of defectors — which is why multilateral sanctions regimes invest heavily in monitoring and secondary sanctions (penalizing countries that trade with defectors). Without enforcement, coalitions unravel."},
+
+{type:"matrix",t:"Cyber Espionage Norms",c:"Int'l Relations",k:"Emerging Norms",
+s:"Two cyber powers each decide whether to restrain state-sponsored hacking to critical infrastructure or conduct unrestricted cyber operations. Both benefit from global digital stability; both are tempted by intelligence advantages.",
+rows:["Show Restraint","Hack Freely"],cols:["Show Restraint","Hack Freely"],p:"Rival State",
+lo:[["Both restrain — digital stability maintained, mutual trust established","Both restrain — digital stability maintained, mutual trust established"],
+    ["You restrain — they harvest your intelligence, critical systems compromised","You hack freely — intel gained, zero reciprocal cost"],
+    ["You harvest their intelligence — they restrain, your operations uncontested","You restrain — they harvest your intelligence, systems compromised"],
+    ["Both hack freely — escalating cyber conflict, global digital infrastructure at risk","Both hack freely — escalating cyber conflict, global digital infrastructure at risk"]],
+m:[[4,4],[1,5],[5,1],[2,2]],n:[3],
+e:"(Hack Freely,Hack Freely) is Nash even though (Restrain,Restrain) is Pareto superior. Unlike nuclear arms, cyber capabilities are hard to verify, making arms control extremely difficult. The Tallinn Manual and bilateral cyber agreements attempt to create credible norms without verification mechanisms."},
+
+{type:"matrix",t:"Foreign Aid Strategy",c:"Int'l Relations",k:"Conditionality",
+s:"A donor country and a recipient government each choose whether to attach conditions (governance reforms, anti-corruption measures) or give/accept unconditionally. Conditionality can improve outcomes but is often ignored once money flows.",
+rows:["Conditional Aid","Unconditional Aid"],cols:["Reform","Don't Reform"],p:"Recipient Gov't",
+lo:[["Conditions met, reforms delivered — aid works as intended, governance improves","Aid released on reform commitments — international credibility gained"],
+    ["Conditions set, reforms refused — aid withheld, stalemate, no progress","Conditions rejected — no reforms, no aid, status quo holds"],
+    ["Aid flows freely — recipient reforms anyway, donor overpays for what would've happened","Unconditional aid triggers reform — unexpectedly good outcome for donor"],
+    ["Aid flows with no strings — recipient takes money, skips reforms","No conditions, no reform — aid dependency locked in, governance unchanged"]],
+m:[[4,3],[1,1],[3,2],[2,4]],n:[0,3],
+e:"Two Nash equilibria: (Conditional Aid, Reform) — the intended dynamic — and (Unconditional Aid, Don't Reform) — the aid dependency trap. If donors cannot credibly commit to withholding aid when conditions aren't met, recipients rationally don't reform. This is why IMF conditionality requires independent monitoring and why aid often fails to produce governance improvements."},
+
+// ---- TECH & DIGITAL 2x2 (44-47) ----
+{type:"matrix",t:"Algorithm Transparency",c:"Tech & Digital",k:"Accountability vs. IP",
+s:"Two social media platforms decide whether to publish their recommendation algorithm for public audit. Transparency builds trust and reduces regulatory risk; secrecy protects proprietary advantage. If one opens and the other doesn't, the open one loses IP while the other gains credibility by association.",
+rows:["Publish Algorithm","Keep Secret"],cols:["Publish Algorithm","Keep Secret"],p:"Rival Platform",
+lo:[["Both publish — public trust restored, regulatory scrutiny eases for both","Both publish — public trust restored, regulatory scrutiny eases for both"],
+    ["You publish, lose IP — they stay secret, gain credibility by association","They keep their algorithm — they free-ride on your transparency signal"],
+    ["They publish, lose IP — you stay secret, gain credibility by association","You keep your algorithm — you free-ride on their transparency signal"],
+    ["Both stay secret — IP protected, but regulatory pressure builds on both","Both stay secret — IP protected, but regulatory pressure builds on both"]],
+m:[[4,4],[1,2],[2,1],[3,3]],n:[0,3],
+e:"Two Nash equilibria: (Publish,Publish) — regulatory trust equilibrium — and (Secret,Secret) — the IP protection equilibrium. Each is self-reinforcing: if both publish, unilateral secrecy looks evasive and draws scrutiny. If both keep secrets, unilateral disclosure surrenders IP advantage with no corresponding gain. Mandatory disclosure rules break the (Secret,Secret) equilibrium by making secrecy illegal."},
+
+{type:"matrix",t:"Content Moderation Standard",c:"Tech & Digital",k:"Platform Governance",
+s:"Two competing video platforms set moderation standards — strict (removes more content, loses some creators) or lenient (keeps more content, attracts creators but risks advertiser pullback). If both are strict, advertisers are happy; if both are lenient, creators flock to both equally.",
+rows:["Strict Moderation","Lenient Moderation"],cols:["Strict Moderation","Lenient Moderation"],p:"Rival Platform",
+lo:[["Both strict — advertisers satisfied, creator base shared equally","Both strict — advertisers satisfied, creator base shared equally"],
+    ["You enforce rules — creators migrate to their lenient platform","You go lenient — creators flock to you, their market share shrinks"],
+    ["You go lenient — creators flock to you, their market share shrinks","You enforce rules — creators migrate to their lenient platform"],
+    ["Both lenient — brand safety crisis, advertisers pull spend, both lose revenue","Both lenient — brand safety crisis, advertisers pull spend, both lose revenue"]],
+m:[[3,3],[1,4],[4,1],[2,2]],n:[3],
+e:"Classic prisoner's dilemma structure. (Lenient,Lenient) is the unique Nash equilibrium — each platform prefers leniency regardless of what the other does, because lenient platforms steal creators from strict ones. When both go lenient, advertisers flee and both lose. Brand safety pressure and regulatory threats are the external mechanisms pushing platforms toward (Strict,Strict) — which is Pareto superior but not a Nash equilibrium without enforcement."},
+
+{type:"matrix",t:"Startup vs. Incumbent: API Access",c:"Tech & Digital",k:"Platform Power",
+s:"A dominant platform can open its API to startups or restrict it. Startups can build on the platform or build a rival. Open APIs help the ecosystem but risk enabling future rivals. Building a rival is costly but preserves independence.",
+rows:["Build on Platform","Build Rival"],cols:["Open API","Restrict API"],p:"Platform",
+lo:[["You build on their stack — open APIs, ecosystem grows, both benefit","Platform stays open — startup scales on their infrastructure"],
+    ["You build on their stack — they restrict access mid-build, you're trapped","You restrict API — their product stalls, they're trapped"],
+    ["You build a rival — they open the APIs, undermining their own moat","You open APIs — they build a rival anyway, resources split, both weaker"],
+    ["You build a rival — they lock you out, full standoff","You restrict API — they compete independently, both waste resources"]],
+m:[[4,3],[2,2],[1,1],[3,2]],n:[0,3],
+e:"The Nash equilibrium depends on how credibly the platform commits to API openness. (Build on Platform, Open API) is efficient but unstable — platforms historically restrict APIs after startups reach scale. (Build Rival, Restrict API) wastes resources. This is the 'kill zone' dynamic in tech ecosystems."},
+
+{type:"matrix",t:"AI Safety Investment",c:"Tech & Digital",k:"Safety vs. Speed Race",
+s:"Two AI labs decide whether to invest heavily in safety research before deploying powerful models, or race to deploy faster with lighter safety checks. If both invest in safety, the field advances responsibly. If one races while the other is careful, the racer gains market share.",
+rows:["Invest in Safety","Race to Deploy"],cols:["Invest in Safety","Race to Deploy"],p:"Rival AI Lab",
+lo:[["Both invest in safety — field advances responsibly, shared public trust","Both invest in safety — field advances responsibly, shared public trust"],
+    ["You take time for safety — they ship first, capture market share and press","You race to deploy — capture the market while they're still testing"],
+    ["You ship first, capture market share and press — they took time for safety","You invest in safety — they ship first, capture market share"],
+    ["Both race to deploy — speed-to-market wins, safety risks compound across the field","Both race to deploy — speed-to-market wins, safety risks compound across the field"]],
+m:[[4,4],[1,5],[5,1],[2,2]],n:[3],
+e:"Classic prisoner's dilemma structure. (Race,Race) is Nash even though (Safety,Safety) is Pareto superior. This is the exact dynamic driving calls for binding AI safety commitments and international AI governance frameworks — voluntary restraint is unstable without coordination mechanisms."},
+
+// ---- ULTIMATUM GAMES (48-49) ----
+{type:"ultimatum",t:"Salary Negotiation",c:"Ultimatum",k:"Fairness and BATNA",
+s:"You're negotiating your starting salary. HR has offered you 60. You can propose your counter between 10-90 (as a share of a 100-point budget). HR has a hidden reservation — below a certain offer to them, they withdraw and hire another candidate.",
+p:"HR Manager",threshold:30,
+reveal:"HR's hidden threshold was 30 — they need to keep at least 30 of the budget to justify the hire internally. Any offer leaving them less gets rejected. In real salary negotiation, knowing the other side's BATNA determines how aggressive you can be."},
+
+{type:"ultimatum",t:"Divorce Settlement",c:"Ultimatum",k:"Loss Aversion in Bargaining",
+s:"Splitting joint assets in a divorce. You propose how to divide 100 points of marital property. Your spouse has a hidden minimum — below it, they'd rather litigate (both pay lawyers and get less) than accept your offer.",
+p:"Spouse",threshold:40,
+reveal:"The threshold was 40. Loss aversion research (Kahneman & Tversky) shows people will reject objectively reasonable offers they perceive as unfair, even at personal cost. In high-emotion negotiations, fairness concerns systematically override pure economic self-interest."},
+
+// ---- CENTIPEDE GAME (50) ----
+{type:"centipede",t:"Trust Between Partners",c:"Centipede",k:"Backward Induction vs. Trust",
+s:"You and a business partner alternate decisions on a joint project. At each stage, you can take your share of the current pot or pass to let it grow. Backward induction says take immediately. But does trust change the math?",
+nodes:12,startPot:[4,1],growth:1.6,computer:"cooperate",
+e:"Backward induction predicts immediate TAKE at node 1: the last mover would take at node 6, so the second-to-last would take at node 5, and so on back to the start. Yet experiments consistently show players pass several times before taking. Trust, altruism, and bounded rationality all break the backward induction logic."},
+
+]; // end SCENARIOS
+
+// Run Nash verifier on load
+SCENARIOS.forEach(verifyNash);
+</script>
+
+</body>
+</html>
