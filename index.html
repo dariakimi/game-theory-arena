@@ -366,7 +366,7 @@ function buildCentPayoffs(s) {
   const payoffs = [];
   let pot = [...s.startPot];
   for (let i = 0; i < s.nodes; i++) {
-    payoffs.push([...pot]);
+    payoffs.push([Math.round(pot[0]), Math.round(pot[1])]);
     pot = [pot[1] * s.growth, pot[0] * s.growth];
   }
   return payoffs;
