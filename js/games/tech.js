@@ -19,7 +19,7 @@ export default [
 
 { id: 'api-access', type: 'matrix', emoji: '🔗', title: 'Build on Their API?', tag: 'Platform power',
   setup: "You're a startup. Build on a big platform's API, or build your own stack? The platform decides whether to keep the API open.",
-  unit: { ...USD, label: 'value' }, them: 'Big platform',
+  unit: { ...USD, label: 'project value' }, them: 'Big platform',
   rows: ['Build on platform', 'Build your own'], cols: ['Keeps API open', 'Restricts API'],
   pay: [[40e6, 30e6], [15e6, 20e6], [5e6, 10e6], [25e6, 20e6]], expectNash: [0, 3],
   takeaway: "Building on an open API is best for both, but if you expect them to restrict it, build your own.",

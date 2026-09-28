@@ -48,7 +48,7 @@ export default [
 
 { id: 'art-auction', type: 'matrix', emoji: '🎨', title: 'Art Auction Tactics', tag: 'Signaling at auction',
   setup: "At a big evening sale, do you bid loudly and early, follow the room, or sit quietly and wait?",
-  unit: { ...USD, label: 'surplus' }, them: 'Rival collector',
+  unit: { ...USD, label: 'surplus from the sale' }, them: 'Rival collector',
   rows: ['Bid loudly early', 'Follow the room', 'Sit quietly'], cols: ['Bids loudly', 'Follows', 'Sits quietly'],
   pay: [[20e3, 20e3], [40e3, 25e3], [30e3, 10e3], [25e3, 40e3], [50e3, 50e3], [45e3, 35e3], [10e3, 30e3], [35e3, 45e3], [70e3, 70e3]],
   expectNash: [4, 8],
@@ -84,7 +84,7 @@ export default [
 
 { id: 'land-holdout', type: 'matrix', emoji: '🏗️', title: 'Land Holdout', tag: 'Assembly problem',
   setup: "A developer needs your plot and your neighbour's. Sell at fair value, hold out for more, or sell to a rival developer?",
-  unit: { ...USD, label: 'what you get' }, them: 'Neighbour', coop: 0,
+  unit: { ...USD, label: 'sale proceeds' }, them: 'Neighbour', coop: 0,
   rows: ['Sell at fair value', 'Hold out', 'Sell to rival dev'], cols: ['Sells fair', 'Holds out', 'Sells to rival'],
   pay: [[500e3, 500e3], [350e3, 450e3], [300e3, 380e3], [450e3, 350e3], [200e3, 200e3], [250e3, 300e3], [380e3, 300e3], [300e3, 250e3], [420e3, 420e3]],
   expectNash: [0, 8],

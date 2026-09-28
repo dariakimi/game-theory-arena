@@ -3,7 +3,7 @@ const USD = { k: 'usd' };
 export default [
 { id: 'commons', type: 'matrix', emoji: '🎣', title: 'Tragedy of the Commons', tag: 'Common resources',
   setup: "Two fishing crews share one bay. Fish sustainably, or haul in as much as you can before the other crew does?",
-  unit: { suf: ' t', label: 'tonnes of fish (2 seasons)' }, them: 'Other crew', coop: 0,
+  unit: { suf: ' t', label: 'catch over 2 seasons' }, them: 'Other crew', coop: 0,
   rows: ['Fish sustainably', 'Max harvest'], cols: ['Sustainable', 'Max harvest'],
   pay: [[100, 100], [40, 130], [130, 40], [60, 60]], expectNash: [3],
   takeaway: "Overfishing is always better for your crew, so the bay is drained and both catch 40% less.",
@@ -19,7 +19,7 @@ export default [
 
 { id: 'recycling', type: 'matrix', emoji: '♻️', title: 'Recycling Rebate', tag: 'Social norms',
   setup: "Your building gets a rebate only if the recycling is clean. Sorting takes time worth about $30 a year.",
-  unit: { ...USD, label: 'saved per year' }, them: 'Neighbour', coop: 0,
+  unit: { ...USD, label: 'yearly savings' }, them: 'Neighbour', coop: 0,
   rows: ['Sort properly', 'Bin everything'], cols: ['Sorts', 'Bins everything'],
   pay: [[120, 120], [-30, 20], [20, -30], [0, 0]], expectNash: [0, 3],
   takeaway: "Sorting pays when your neighbour sorts too, but it's wasted effort if they contaminate the bin anyway.",
@@ -35,7 +35,7 @@ export default [
 
 { id: 'noise', type: 'matrix', emoji: '🔊', title: 'Noisy Neighbours', tag: 'Coase theorem',
   setup: "Keep it quiet after 10pm, or host loud parties? Your neighbour chooses too. Outcome: what the month is worth to you.",
-  unit: { ...USD, label: 'monthly worth' }, them: 'Neighbour', coop: 0,
+  unit: { ...USD, label: 'value of the month' }, them: 'Neighbour', coop: 0,
   rows: ['Keep it quiet', 'Party loud'], cols: ['Quiet', 'Parties'],
   pay: [[400, 400], [100, 300], [300, 100], [150, 150]], expectNash: [0, 3],
   takeaway: "A quiet building is best for both, but once one side gets loud, spite keeps both loud.",
@@ -43,7 +43,7 @@ export default [
 
 { id: 'tipping', type: 'matrix', emoji: '🍽️', title: 'Tipping Culture', tag: 'Conventions',
   setup: "At your regular spot, service stays great only if diners tip. Tip 20%, or pocket the money?",
-  unit: { ...USD, label: 'meal value (after tip)' }, them: 'Other diner', coop: 0,
+  unit: { ...USD, label: 'meal value after tip' }, them: 'Other diner', coop: 0,
   rows: ['Tip 20%', "Don't tip"], cols: ['Tips', "Doesn't tip"],
   pay: [[40, 40], [15, 30], [30, 15], [25, 25]], expectNash: [0, 3],
   takeaway: "Tipping and not tipping are both stable conventions, and countries have landed on different ones.",
@@ -51,7 +51,7 @@ export default [
 
 { id: 'masks', type: 'matrix', emoji: '😷', title: 'Mask on the Train', tag: 'Externality',
   setup: "Flu season. A mask mostly protects other people and is annoying for you. Outcome: days lost to illness and hassle.",
-  unit: { suf: ' days', better: 'lower', label: 'days lost this season' }, them: 'Fellow commuter', coop: 0,
+  unit: { suf: ' days', one: ' day', better: 'lower', label: 'days lost this season' }, them: 'Fellow commuter', coop: 0,
   rows: ['Wear a mask', 'No mask'], cols: ['Masks', 'No mask'],
   pay: [[3, 3], [6, 2], [2, 6], [5, 5]], expectNash: [3],
   takeaway: "Your mask helps others more than you, so nobody wears one and everyone loses more days.",

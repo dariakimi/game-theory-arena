@@ -14,7 +14,8 @@ export function fmt(v, unit, { signed = false } = {}) {
     else body = '$' + a.toLocaleString('en-US', { maximumFractionDigits: 2 });
   } else {
     const dec = unit.dec ?? (Number.isInteger(a) ? 0 : 1);
-    body = (unit.pre || '') + a.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + (unit.suf || '');
+    const suf = a === 1 && unit.one ? unit.one : (unit.suf || '');
+    body = (unit.pre || '') + a.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
   }
   if (neg) return '−' + body;
   return (signed && v > 0 ? '+' : '') + body;

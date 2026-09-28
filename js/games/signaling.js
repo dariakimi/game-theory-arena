@@ -3,7 +3,7 @@ const USD = { k: 'usd' };
 export default [
 { id: 'job-signal', type: 'matrix', emoji: '📂', title: 'Stand Out for the Job', tag: 'Spence signaling',
   setup: "Final round for a senior role. Lead with your portfolio of real work, your credentials, or an insider referral?",
-  unit: { suf: '%', label: 'chance of the offer' }, them: 'Rival candidate',
+  unit: { suf: '%', label: 'chance of getting the offer' }, them: 'Rival candidate',
   rows: ['Show portfolio', 'Stress credentials', 'Lean on referral'], cols: ['Portfolio', 'Credentials', 'Referral'],
   pay: [[60, 60], [70, 45], [55, 50], [45, 70], [40, 40], [60, 65], [50, 55], [65, 60], [30, 30]],
   expectNash: [0],
@@ -39,7 +39,7 @@ export default [
 
 { id: 'college-arms-race', type: 'matrix', emoji: '🎓', title: 'College Admissions Race', tag: 'Credential inflation',
   setup: "Admissions judge you relative to rivals. Pour money into tutoring and activities, do a moderate amount, or the minimum?",
-  unit: { ...USD, label: 'scholarship value minus cost' }, them: 'Rival applicant',
+  unit: { ...USD, label: 'net scholarship value' }, them: 'Rival applicant',
   rows: ['Go all in', 'Moderate effort', 'Minimum effort'], cols: ['All in', 'Moderate', 'Minimum'],
   pay: [[20e3, 20e3], [25e3, 10e3], [40e3, 0], [10e3, 25e3], [30e3, 30e3], [45e3, 15e3], [0, 40e3], [15e3, 45e3], [50e3, 50e3]],
   expectNash: [0, 4, 8],

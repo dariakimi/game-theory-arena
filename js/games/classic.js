@@ -3,7 +3,7 @@ const USD = { k: 'usd' };
 export default [
 { id: 'prisoners-dilemma', type: 'matrix', emoji: '🚔', title: "Prisoner's Dilemma", tag: 'Dominant strategy',
   setup: "You and your partner are arrested and held apart. Stay silent, or confess and testify against them?",
-  unit: { suf: ' yrs', better: 'lower', label: 'years in prison' }, them: 'Partner', coop: 0,
+  unit: { suf: ' yrs', one: ' yr', better: 'lower', label: 'years in prison' }, them: 'Partner', coop: 0,
   rows: ['Stay silent', 'Confess'], cols: ['Stays silent', 'Confesses'],
   pay: [[1, 1], [10, 0], [0, 10], [5, 5]], expectNash: [3],
   takeaway: "Confessing is better for you whatever they do, so both confess and serve 5 years instead of 1.",
@@ -11,7 +11,7 @@ export default [
 
 { id: 'stag-hunt', type: 'matrix', emoji: '🦌', title: 'Stag Hunt', tag: 'Coordination',
   setup: "A stag needs two hunters and feeds you for a week. A hare you can catch alone, but it only lasts two days.",
-  unit: { suf: ' days', label: 'days of food' }, them: 'Other hunter', coop: 0,
+  unit: { suf: ' days', one: ' day', label: 'days of food' }, them: 'Other hunter', coop: 0,
   rows: ['Hunt the stag', 'Hunt a hare'], cols: ['Hunts stag', 'Hunts hare'],
   pay: [[7, 7], [0, 2], [2, 0], [2, 2]], expectNash: [0, 3],
   takeaway: "Both outcomes are stable; the stag is better, but only if you trust the other hunter to show up.",
@@ -19,7 +19,7 @@ export default [
 
 { id: 'battle-of-sexes', type: 'matrix', emoji: '🎭', title: 'Date Night Clash', tag: 'Coordination with conflict',
   setup: "You'd rather see boxing, your partner prefers ballet. Being together matters most. You can't text each other.",
-  unit: { ...USD, label: 'evening worth' }, them: 'Partner',
+  unit: { ...USD, label: 'value of the evening' }, them: 'Partner',
   rows: ['Go to boxing', 'Go to ballet'], cols: ['Goes to boxing', 'Goes to ballet'],
   pay: [[120, 80], [0, 0], [0, 0], [80, 120]], expectNash: [0, 3],
   takeaway: "Any evening together beats going alone; the fight is only over whose favourite you end up at.",
@@ -27,7 +27,7 @@ export default [
 
 { id: 'hawk-dove', type: 'matrix', emoji: '🦅', title: 'Hawk vs Dove', tag: 'Evolutionary stability',
   setup: "Two animals find a 4,000 kcal carcass. Hawks fight for it; doves share or back off. A fight costs 6,000 kcal in injuries.",
-  unit: { suf: ' kcal', label: 'energy' }, them: 'Rival',
+  unit: { suf: ' kcal', label: 'energy gained' }, them: 'Rival',
   rows: ['Play Hawk', 'Play Dove'], cols: ['Plays Hawk', 'Plays Dove'],
   pay: [[-1000, -1000], [4000, 0], [0, 4000], [2000, 2000]], expectNash: [1, 2],
   takeaway: "Back down against a hawk and grab everything from a dove, because two hawks both end up worse off.",

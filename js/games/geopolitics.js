@@ -19,7 +19,7 @@ export default [
 
 { id: 'sanctions', type: 'matrix', emoji: '🚫', title: 'Holding Sanctions', tag: 'Coalition maintenance',
   setup: "You and an ally sanction a hostile regime. Quietly trading with it would earn billions.",
-  unit: { ...USD, label: 'economic + security value' }, them: 'Allied country', coop: 0,
+  unit: { ...USD, label: 'economic and security value' }, them: 'Allied country', coop: 0,
   rows: ['Hold sanctions', 'Trade quietly'], cols: ['Holds', 'Trades quietly'],
   pay: [[10e9, 10e9], [0, 15e9], [15e9, 0], [5e9, 5e9]], expectNash: [3],
   takeaway: "Each ally is tempted to leak, and once both leak the sanctions stop working.",

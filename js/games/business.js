@@ -59,7 +59,7 @@ export default [
 
 { id: 'labor-strike', type: 'matrix', emoji: '🪧', title: 'Contract Talks', tag: 'Bargaining power',
   setup: "You lead the union. Hold a hard line on wages, or be flexible? A hard line on both sides means a strike.",
-  unit: { ...USD, label: 'value to each side' }, them: 'Management',
+  unit: { ...USD, label: 'deal value' }, them: 'Management',
   rows: ['Hard line', 'Be flexible'], cols: ['Hard line', 'Flexible'],
   pay: [[-10e6, -10e6], [8e6, 2e6], [2e6, 8e6], [5e6, 5e6]], expectNash: [1, 2],
   takeaway: "Toughness pays only if the other side blinks, and if nobody blinks, the strike costs both $10M.",
