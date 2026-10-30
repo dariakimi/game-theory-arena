@@ -21,7 +21,7 @@ export default [
   setup: "You run a startup. Build on a big platform's API, or build everything yourself? The platform decides whether to keep the API open.",
   unit: { ...USD, label: 'company value' }, them: 'Big platform',
   rows: ['Build on the platform', 'Build it yourself'], cols: ['Keeps the API open', 'Restricts the API'],
-  pay: [[40e6, 30e6], [15e6, 20e6], [5e6, 10e6], [25e6, 20e6]], expectNash: [0, 3],
+  pay: [[40e6, 30e6], [15e6, 25e6], [5e6, 10e6], [25e6, 20e6]], expectNash: [0, 3],
   takeaway: "Building on an open API is best for both, and if you expect them to restrict it, build it yourself.",
   why: "Twitter, Facebook and Reddit all restricted their APIs after startups had built on them, so founders now plan for that risk." },
 

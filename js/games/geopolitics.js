@@ -53,7 +53,7 @@ export default [
   setup: "Two mid-sized countries near a superpower can join its alliance, ally with each other, or stay neutral.",
   unit: { suf: '%', better: 'lower', label: 'invasion risk' }, them: 'Neighbouring country',
   rows: ["Join the superpower", 'Ally with each other', 'Stay neutral'], cols: ['Joins the superpower', 'Allies with you', 'Stays neutral'],
-  pay: [[7, 7], [6, 8], [5, 6], [8, 6], [3, 3], [9, 10], [6, 5], [10, 9], [4, 4]], expectNash: [4, 8],
+  pay: [[7, 7], [9, 10], [5, 6], [10, 9], [3, 3], [11, 12], [6, 5], [12, 11], [4, 4]], expectNash: [4, 8],
   takeaway: "An alliance between the two of you is safest if both commit, and mutual neutrality is the stable fallback.",
   why: "Balance-of-power theory predicts that smaller countries team up against a dominant power instead of joining it." },
 

@@ -5,8 +5,8 @@ export default [
   setup: "Two fishing crews share one bay. Fish at a sustainable rate, or catch as much as you can before the other crew does?",
   unit: { ...USD, label: 'catch value over 2 seasons' }, them: 'Other crew', coop: 0,
   rows: ['Fish sustainably', 'Catch the maximum'], cols: ['Fishes sustainably', 'Catches the maximum'],
-  pay: [[200e3, 200e3], [80e3, 260e3], [260e3, 80e3], [120e3, 120e3]], expectNash: [3],
-  takeaway: "Overfishing always pays more for your crew, so the bay empties and both crews earn 40% less.",
+  pay: [[200e3, 200e3], [40e3, 260e3], [260e3, 40e3], [70e3, 70e3]], expectNash: [3],
+  takeaway: "Overfishing always pays more for your crew, so both crews overfish, the bay runs out and each earns $70k instead of $200k.",
   why: "Elinor Ostrom won a Nobel Prize for showing that communities avoid this with local rules, monitoring and penalties that grow with each offence." },
 
 { id: 'climate', type: 'matrix', emoji: '🌡️', title: 'Climate Pledge', tag: 'Global public good',
@@ -18,11 +18,11 @@ export default [
   why: "The Paris Agreement asks countries to publish their pledges and report progress, so freeloading is visible to everyone." },
 
 { id: 'recycling', type: 'matrix', emoji: '♻️', title: 'Recycling Rebate', tag: 'Social norms',
-  setup: "Your building gets a rebate only if the recycling is clean. Sorting takes time worth about $30 a year.",
+  setup: "Your building pays each flat $150 a year if the recycling is clean, or $20 if it's half clean. Sorting takes time worth $30.",
   unit: { ...USD, label: 'yearly savings' }, them: 'Neighbour', coop: 0,
   rows: ['Sort properly', 'Bin everything'], cols: ['Sorts properly', 'Bins everything'],
-  pay: [[120, 120], [-30, 20], [20, -30], [0, 0]], expectNash: [0, 3],
-  takeaway: "Sorting pays when your neighbour sorts too, and it's wasted effort if they spoil the bin anyway.",
+  pay: [[120, 120], [-10, 20], [20, -10], [0, 0]], expectNash: [0, 3],
+  takeaway: "Sorting pays when your neighbour sorts too, and it costs you money if they spoil the bin anyway.",
   why: "Both habits are stable: everyone sorts or nobody does. Clear labels and visible bins can move a building to the first one." },
 
 { id: 'vaccination', type: 'matrix', emoji: '💉', title: 'To Vaccinate or Not', tag: 'Herd immunity',
@@ -40,14 +40,6 @@ export default [
   pay: [[400, 400], [100, 300], [300, 100], [150, 150]], expectNash: [0, 3],
   takeaway: "A quiet building is best for both of you, and once one side gets loud, resentment keeps both sides loud.",
   why: "Ronald Coase showed that neighbours could negotiate the best outcome themselves. Awkwardness and resentment are the costs that stop them." },
-
-{ id: 'tipping', type: 'matrix', emoji: '🍽️', title: 'Tipping Culture', tag: 'Social conventions',
-  setup: "At your regular restaurant, service stays good only if diners tip. Tip 20%, or keep the money?",
-  unit: { ...USD, label: 'meal value after tip' }, them: 'Other diner', coop: 0,
-  rows: ['Tip 20%', "Don't tip"], cols: ['Tips', "Doesn't tip"],
-  pay: [[40, 40], [15, 30], [30, 15], [25, 25]], expectNash: [0, 3],
-  takeaway: "Tipping and not tipping are both stable habits, and different countries have settled on different ones.",
-  why: "Once a tipping habit disappears, one diner can't bring it back alone, which is why these habits change so slowly." },
 
 { id: 'masks', type: 'matrix', emoji: '😷', title: 'Mask on the Train', tag: 'Externality',
   setup: "It's flu season. A mask mostly protects other people, and it's uncomfortable for you. Outcome: your sick days and hassle.",
