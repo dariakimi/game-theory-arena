@@ -34,12 +34,12 @@ export default [
   why: "When the US banned cigarette ads on TV in 1971, tobacco companies' profits went up, because the ban settled this dilemma for them." },
 
 { id: 'anchoring', type: 'matrix', emoji: '🤝', title: 'Supplier Negotiation', tag: 'Anchoring',
-  setup: "You're negotiating a supply contract. Open with a very low offer, or with a reasonable one?",
-  unit: { ...USD, label: 'yearly savings' }, them: 'Supplier', coop: 1,
-  rows: ['Open very low', 'Open reasonably'], cols: ['Counters hard', 'Counters fairly'],
-  pay: [[20e3, 20e3], [35e3, 25e3], [25e3, 35e3], [45e3, 45e3]], expectNash: [3],
-  takeaway: "A reasonable opening beats a very low one whatever the supplier does, because an extreme offer drags the talks out.",
-  why: "An opening number works only if the other side takes it seriously. An extreme offer gets an extreme counter, and the delay costs both sides." },
+  setup: "You're buying a supply contract. Open with a very low offer, or a reasonable one? The supplier then holds firm or meets you halfway.",
+  unit: { ...USD, label: 'value from the deal' }, them: 'Supplier',
+  rows: ['Open very low', 'Open reasonably'], cols: ['Holds firm', 'Meets you halfway'],
+  pay: [[10e3, 35e3], [50e3, 25e3], [20e3, 40e3], [35e3, 45e3]], expectNash: [],
+  takeaway: "A very low opening pays against a supplier who splits the difference and backfires against one who holds firm.",
+  why: "This game has no stable pair of choices. Each side does best by guessing the other's style, which is why negotiators research the other side first." },
 
 { id: 'bank-merger', type: 'matrix', emoji: '🏦', title: 'Bank Merger', tag: 'Assurance game',
   setup: "Two regional banks consider merging. It works only if both boards commit; otherwise the merger costs are wasted.",
@@ -80,14 +80,6 @@ export default [
   pay: [[80e6, 80e6], [30e6, 60e6], [60e6, 30e6], [40e6, 40e6]], expectNash: [0, 3],
   takeaway: "Opening up together creates the most value, and opening up alone hands your work to a company that gives nothing back.",
   why: "Linux and Kubernetes grew because several large companies committed to them at the same time." },
-
-{ id: 'contract-bid', type: 'matrix', emoji: '📄', title: 'Government Tender', tag: 'Bid coordination',
-  setup: "You and a rival bid for a government contract. The lowest bid wins. Bid low, or bid at a healthy price?",
-  unit: { ...USD, label: 'expected profit' }, them: 'Rival company', coop: 1,
-  rows: ['Bid low', 'Bid healthy'], cols: ['Bids low', 'Bids healthy'],
-  pay: [[50e3, 50e3], [200e3, 0], [0, 200e3], [300e3, 300e3]], expectNash: [0, 3],
-  takeaway: "Healthy bids pay best when the rival bids healthy too, and if they bid low, you have to bid low as well.",
-  why: "Both outcomes are stable. Agreeing with the rival on healthy prices would be bid-rigging, which is a crime." },
 
 { id: 'talent-poaching', type: 'matrix', emoji: '🧑‍💻', title: 'Talent Poaching', tag: 'Salary spiral',
   setup: "Hire your rival's engineers with big offers, or leave each other's teams alone?",
