@@ -1,6 +1,6 @@
 # Game Theory Arena
 
-80 real-world strategy games with real stakes: dollars, years in prison, market share. Play at https://dariakimi.github.io/game-theory-arena/
+76 real-world strategy games with real stakes in dollars and years. Play at https://dariakimi.github.io/game-theory-arena/
 
 Plain HTML, CSS and JavaScript with no build step. GitHub Pages serves the `main` branch as-is.
 

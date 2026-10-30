@@ -10,6 +10,7 @@ if (files.length) {
   games = (await import('../js/games/index.js')).GAMES;
 }
 
+const BANNED = /\b(delve|realm|harness|unlock|tapestry|paradigm|cutting\-edge|revolutionize|intricate|intricacies|showcasing|crucial|pivotal|surpass|meticulously|vibrant|unparalleled|underscore|leverage|synergy|innovative|game\-changer|testament|commendable|meticulous|highlight|emphasize|boast|groundbreaking|align|foster|showcase|enhance|holistic|garner|accentuate|pioneering|trailblazing|unleash|versatile|transformative|redefine|seamless|optimize|scalable|robust|breakthrough|empower|streamline|frictionless|elevate|adaptive|effortless|data\-driven|insightful|proactive|mission\-critical|visionary|disruptive|reimagine|unprecedented|intuitive|leading\-edge|synergize|democratize|accelerate|state\-of\-the\-art|dynamic|immersive|predictive|transparent|proprietary|integrated|plug\-and\-play|turnkey|future\-proof|supercharge|enduring|interplay|valuable|captivate|furthermore|moreover|additionally)\w*/i;
 const errors = [];
 const err = (g, msg) => errors.push(`${g.id || '?'}: ${msg}`);
 const ids = new Set();
@@ -24,6 +25,11 @@ for (const g of games) {
   if (g.takeaway && /[.!?]\s+[A-Z]/.test(g.takeaway)) err(g, 'takeaway should be one sentence');
   if (g.why && g.why.length > 260) err(g, `why is ${g.why.length} chars (max 260)`);
   if (g.unit && g.unit.better && !['higher', 'lower'].includes(g.unit.better)) err(g, 'bad unit.better');
+  const text = [g.title, g.tag, g.setup, g.takeaway, g.why, g.them, g.unit?.label, ...(g.rows || []), ...(g.cols || [])].filter(Boolean).join(' \n ');
+  if (/[—–]/.test(text)) err(g, 'contains an em or en dash');
+  const banned = text.match(BANNED);
+  if (banned) err(g, `banned word: "${banned[0]}"`);
+  if (/\bnot (just|only)\b|\bisn't .{1,40}\. it's\b|\bit's not about\b/i.test(text)) err(g, 'reframe pattern ("not X, but Y")');
 
   if (g.type === 'matrix') {
     const R = g.rows?.length, C = g.cols?.length;
@@ -44,7 +50,6 @@ for (const g of games) {
   } else err(g, `unknown type ${g.type}`);
 }
 
-if (!files.length && games.length !== 80) errors.push(`expected 80 games, found ${games.length}`);
 
 // Quick sample of formatting so units can be eyeballed.
 if (process.env.SHOW) for (const g of games.filter(g => g.type === 'matrix'))

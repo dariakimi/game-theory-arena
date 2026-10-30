@@ -17,6 +17,14 @@ const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { cons
 const KEY = 'gta-v2';
 let store = { results: {}, run: null };
 try { store = { ...store, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { /* storage unavailable */ }
+// Drop saved data for games that no longer exist.
+for (const id of Object.keys(store.results || {})) if (!GAME_BY_ID[id]) delete store.results[id];
+if (store.run) {
+  const before = store.run.ids.length;
+  store.run.ids = store.run.ids.filter(id => GAME_BY_ID[id]);
+  store.run.results = (store.run.results || []).filter(r => GAME_BY_ID[r.id]);
+  store.run.idx = Math.max(0, Math.min(store.run.idx - (before - store.run.ids.length), store.run.ids.length));
+}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* ignore */ } };
 
 // Current in-progress game (not persisted).
@@ -67,7 +75,7 @@ function overallStats() {
 function updateChrome() {
   const s = overallStats(), el = $('#overall');
   el.hidden = !s;
-  if (s) el.innerHTML = `${s.played}/80 played · avg <b class="${gradeClass(s.letter)}">${s.letter}</b>`;
+  if (s) el.innerHTML = `${s.played}/${GAMES.length} played · avg <b class="${gradeClass(s.letter)}">${s.letter}</b>`;
   const run = store.run;
   $('#run-bar').style.width = run && live ? `${(run.idx / run.ids.length) * 100}%` : '0%';
 }
@@ -124,14 +132,14 @@ function renderHome() {
   const run = store.run && store.run.idx < store.run.ids.length ? store.run : null;
   show(`
   <section class="hero">
-    <p class="eyebrow">80 real-world dilemmas</p>
+    <p class="eyebrow">${GAMES.length} real-world dilemmas</p>
     <h1>Can you outsmart<br><span class="scribble">the other side?</span></h1>
-    <p class="lede">Real stakes (dollars, prison years, market share). Make your move, see theirs, and get graded.</p>
+    <p class="lede">Every game has real stakes, from salaries to prison years. Make your move, see the other side's, and get a grade.</p>
     <div class="hero-cta">
       ${run ? `<button class="btn btn-primary btn-lg" data-action="resume">▶ Continue: ${esc(run.label)} (${run.idx + 1}/${run.ids.length})</button>
                <button class="btn btn-lg" data-action="quick">🎲 New quick game</button>`
             : `<button class="btn btn-primary btn-lg" data-action="quick">▶ Quick game · 10 rounds</button>
-               <button class="btn btn-lg" data-action="browse">Browse all 80</button>`}
+               <button class="btn btn-lg" data-action="browse">Browse all ${GAMES.length}</button>`}
     </div>
   </section>
   <h2 class="section-title">Pick a world</h2>
@@ -146,7 +154,7 @@ function renderHome() {
       </button>`;
     }).join('')}
   </section>
-  <p class="foot">Tip: press <kbd>1</kbd>–<kbd>3</kbd> to choose and <kbd>Enter</kbd> to continue.</p>`);
+  <p class="foot">Tip: press <kbd>1</kbd>, <kbd>2</kbd> or <kbd>3</kbd> to choose and <kbd>Enter</kbd> to continue.</p>`);
 }
 
 // ============ Game screen ============
@@ -227,8 +235,15 @@ async function chooseMatrix(r) {
   const better = gr.letter === 'A' ? `You couldn't have done better against “${esc(g.cols[c])}”.`
     : `Your best reply to “${esc(g.cols[c])}” was <b>${esc(g.rows[gr.bestRows[0]])}</b>: ${fmt(gr.bestValue, g.unit)}.`;
   resultPanel(g, gr.letter, you, `${esc(g.them)} chose <b>${esc(g.cols[c])}</b> and got ${fmt(them, g.unit)}.`, better,
-    `${isNash ? '<span class="badge">⭐ Stable outcome</span>' : ''}${isJoint ? '<span class="badge">🤝 Best for both</span>' : ''}`,
-    fullTable(g, idx));
+    `${isNash ? '<span class="badge">⭐ Stable outcome</span>' : ''}${isJoint ? '<span class="badge">🤝 Best combined outcome</span>' : ''}`,
+    bestForBoth(g, idx) + fullTable(g, idx));
+}
+
+// One plain sentence describing the outcome with the highest combined payoff.
+function bestForBoth(g, hit) {
+  const j = bestJoint(g)[0], C = g.cols.length, [y, t] = g.pay[j];
+  const desc = `you <b>${esc(g.rows[Math.floor(j / C)].toLowerCase())}</b> and ${esc(g.them)} <b>${esc(g.cols[j % C].toLowerCase())}</b>, giving you ${fmt(y, g.unit)} and them ${fmt(t, g.unit)}`;
+  return `<p class="best-both">🤝 <b>Best combined outcome:</b> ${desc}.${bestJoint(g).includes(hit) ? ' You got there.' : ''}</p>`;
 }
 
 function fullTable(g, hit) {
@@ -386,15 +401,15 @@ function resultPanel(g, letter, you, sub, better, badges, extra = '') {
 
 // ============ Summary ============
 const PROFILES = {
-  'Strategic Cooperator': 'You played sharp and still cooperated when it paid. The best negotiators look like this.',
-  'Cold Calculator': 'Best-response machine. You rarely left value on the table for yourself, even if the other side did.',
-  'Hopeful Idealist': 'You kept betting on cooperation. It built trust, but rational opponents often made you pay for it.',
-  'Wildcard': 'Unpredictable! Sometimes brilliant, sometimes costly. At least nobody could read your moves.',
-  'Adaptive Player': 'You adjusted to each situation instead of sticking to one style, which is what most real decision-makers do.',
+  'Strategic Cooperator': 'You made smart moves and still cooperated when it paid off for both sides, which is how good negotiators play.',
+  'Sharp Strategist': 'You almost always picked the best reply to the other side, even when cooperating would have helped you both more.',
+  'Hopeful Idealist': 'You kept choosing to cooperate. That builds trust over time, but in one-off games the other side often took advantage.',
+  'Wildcard': 'Your moves were hard to predict, and they cost you more often than they paid off.',
+  'Adaptive Player': 'You changed your approach from game to game, which is what most people do in real negotiations.',
 };
 function profileFor(score, coop) {
-  if (coop === null) return score >= 80 ? 'Cold Calculator' : score < 55 ? 'Wildcard' : 'Adaptive Player';
-  if (score >= 80) return coop >= 0.5 ? 'Strategic Cooperator' : 'Cold Calculator';
+  if (coop === null) return score >= 80 ? 'Sharp Strategist' : score < 55 ? 'Wildcard' : 'Adaptive Player';
+  if (score >= 80) return coop >= 0.5 ? 'Strategic Cooperator' : 'Sharp Strategist';
   if (score < 55) return coop >= 0.5 ? 'Hopeful Idealist' : 'Wildcard';
   return 'Adaptive Player';
 }
@@ -419,7 +434,7 @@ function renderSummary() {
     <div class="tiles">
       <div class="tile"><b>${rs.length}</b><span>games played</span></div>
       <div class="tile"><b>${aCount}</b><span>perfect moves</span></div>
-      <div class="tile"><b>${coop === null ? '—' : Math.round(coop * 100) + '%'}</b><span>cooperation</span></div>
+      <div class="tile"><b>${coop === null ? 'n/a' : Math.round(coop * 100) + '%'}</b><span>cooperation</span></div>
     </div>
     <ol class="recap">${rs.map(r => { const g = GAME_BY_ID[r.id];
       return `<li><button data-action="replay" data-id="${r.id}"><span aria-hidden="true">${g.emoji}</span> ${esc(g.title)}<span class="mini ${gradeClass(r.letter)}">${r.letter}</span></button></li>`; }).join('')}</ol>

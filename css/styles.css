@@ -240,6 +240,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 32px; curs
 .better { margin-top: 14px; }
 .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .badge { font-size: 14px; font-weight: 700; padding: 3px 10px; border: 2px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--yellow) 35%, var(--card)); }
+.best-both { margin-top: 12px; color: var(--muted); }
+.best-both b { color: var(--ink); }
 .takeaway { margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-weight: 500; background: color-mix(in srgb, var(--blue) 12%, var(--card)); border: 2px dashed color-mix(in srgb, var(--blue) 60%, var(--line)); }
 details { margin-top: 12px; }
 summary { cursor: pointer; font-weight: 700; color: var(--muted); }
