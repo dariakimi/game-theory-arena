@@ -1,10 +1,10 @@
-import { GAMES, CATEGORIES, GAME_BY_ID, CAT_BY_KEY } from './games/index.js?v=2';
+import { GAMES, CATEGORIES, GAME_BY_ID, CAT_BY_KEY } from './games/index.js?v=3';
 import {
   fmt, util, cell, nash, bestJoint, opponentMove, gradeMatrix,
   ULT_STEPS, ultimatumOutcome, gradeUltimatum,
   centNodes, centOpponentTakes, gradeCentipede,
   GRADE_SCORE, letterFromScore,
-} from './engine.js?v=2';
+} from './engine.js?v=3';
 
 const $ = sel => document.querySelector(sel);
 const app = $('#app');
@@ -13,19 +13,14 @@ const wait = ms => new Promise(r => setTimeout(r, reduceMotion ? 0 : ms));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-// ============ Persistence ============
-const KEY = 'gta-v2';
-let store = { results: {}, run: null };
-try { store = { ...store, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { /* storage unavailable */ }
-// Drop saved data for games that no longer exist.
-for (const id of Object.keys(store.results || {})) if (!GAME_BY_ID[id]) delete store.results[id];
-if (store.run) {
-  const before = store.run.ids.length;
-  store.run.ids = store.run.ids.filter(id => GAME_BY_ID[id]);
-  store.run.results = (store.run.results || []).filter(r => GAME_BY_ID[r.id]);
-  store.run.idx = Math.max(0, Math.min(store.run.idx - (before - store.run.ids.length), store.run.ids.length));
-}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* ignore */ } };
+// ============ Progress ============
+// Kept in memory only, so every visit starts from the home screen with a clean slate.
+const store = { results: {}, run: null };
+const save = () => {};
+// Clear progress saved by earlier versions of the site.
+try { localStorage.removeItem('gta-v2'); } catch { /* storage unavailable */ }
+// Safari and others can restore a page from memory when you come back to it; start fresh instead.
+addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
 
 // Current in-progress game (not persisted).
 let live = null;
