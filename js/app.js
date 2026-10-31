@@ -1,10 +1,10 @@
-import { GAMES, CATEGORIES, GAME_BY_ID, CAT_BY_KEY } from './games/index.js';
+import { GAMES, CATEGORIES, GAME_BY_ID, CAT_BY_KEY } from './games/index.js?v=2';
 import {
   fmt, util, cell, nash, bestJoint, opponentMove, gradeMatrix,
   ULT_STEPS, ultimatumOutcome, gradeUltimatum,
   centNodes, centOpponentTakes, gradeCentipede,
   GRADE_SCORE, letterFromScore,
-} from './engine.js';
+} from './engine.js?v=2';
 
 const $ = sel => document.querySelector(sel);
 const app = $('#app');
