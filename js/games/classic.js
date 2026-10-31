@@ -33,14 +33,6 @@ export default [
   takeaway: "No choice is safe here, and the only plan your opponent can't exploit is picking at random, 50/50.",
   why: "This game has no stable pair of choices. Penalty kicks and poker bluffs work the same way: any pattern you fall into gets punished." },
 
-{ id: 'free-trade-pact', type: 'matrix', emoji: '🚢', title: 'Free Trade Pact', tag: 'Coordination failure',
-  setup: "Two countries each choose to keep trade open or raise tariffs. Open trade pays off only if the other country stays open too.",
-  unit: { ...USD, label: 'GDP gain' }, them: 'Country B', coop: 0,
-  rows: ['Keep trade open', 'Raise tariffs'], cols: ['Keeps it open', 'Raises tariffs'],
-  pay: [[60e9, 60e9], [20e9, 40e9], [40e9, 20e9], [30e9, 30e9]], expectNash: [0, 3],
-  takeaway: "Open trade and a mutual tariff wall are both stable, so two countries can get stuck in the worse one.",
-  why: "Neither country wants to be the only one with open markets. Trade agreements with penalties exist to keep both in the better outcome." },
-
 { id: 'chicken', type: 'matrix', emoji: '🚗', title: 'Game of Chicken', tag: 'Anti-coordination',
   setup: "Two drivers speed toward each other on a $1,000 bet. Whoever swerves loses the bet. A crash costs each of them $50k.",
   unit: { ...USD, label: 'money' }, them: 'Other driver',

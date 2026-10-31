@@ -171,6 +171,7 @@ function gameHeader(g) {
       <p class="tag">${esc(g.tag)}</p>
       <h1 class="scenario-title">${esc(g.title)}</h1>
       <p class="setup">${esc(g.setup)}</p>
+      ${g.type === 'matrix' ? stakesList(g) : ''}
       <p class="goal">🎯 Your goal: <b>${esc(goalText(g))}</b></p>
     </div>
   </article>
@@ -178,6 +179,18 @@ function gameHeader(g) {
     <span class="avatar you">🙂 You</span><span class="vs">vs</span>
     <span class="avatar them" id="them">🤖 ${esc(g.them)} <span class="bubble" id="bubble"></span></span>
   </div>`;
+}
+
+// Every outcome in words, so the player can weigh the stakes before the grid is revealed.
+function stakesList(g) {
+  return `<div class="stakes">${g.rows.map((row, r) => `
+    <div class="stake-group">
+      <p class="stake-move">If you pick <b>${esc(row)}</b></p>
+      <ul>${g.cols.map((col, c) => {
+        const [y, t] = cell(g, r, c);
+        return `<li><span class="stake-if">${esc(g.them)}: ${esc(col)}</span><span class="stake-pay">you <b>${fmt(y, g.unit)}</b>, them ${fmt(t, g.unit)}</span></li>`;
+      }).join('')}</ul>
+    </div>`).join('')}</div>`;
 }
 
 function renderGame(g) {
@@ -195,18 +208,17 @@ function renderGame(g) {
 
 // ----- Matrix -----
 function matrixChoices(g) {
-  return `<p class="hint">Choose your move. They choose at the same time.</p>
+  return `<p class="hint">Choose your move. ${esc(g.them)} chooses at the same time, and the grid fills in once you've picked.</p>
   <div class="choices" role="group" aria-label="Your move">
     ${g.rows.map((row, r) => `
       <button class="choice" data-action="choose" data-r="${r}">
         <span class="choice-head"><kbd>${r + 1}</kbd><span class="choice-label">${esc(row)}</span></span>
         <span class="outcomes" style="--n:${g.cols.length}">
           ${g.cols.map((col, c) => {
-            const [y, t] = cell(g, r, c);
             return `<span class="outcome" data-c="${c}">
               <span class="if">${esc(g.them)}: <b>${esc(col)}</b></span>
-              <span class="val" style="${tone(g, y, 0)}">${fmt(y, g.unit)}</span>
-              <span class="their">them ${fmt(t, g.unit)}</span>
+              <span class="val hidden">?</span>
+              <span class="their">them ?</span>
             </span>`;
           }).join('')}
         </span>
@@ -223,42 +235,80 @@ async function chooseMatrix(r) {
   const c = opponentMove(g);
   $('#bubble').textContent = g.cols[c];
   $('#bubble').classList.add('show');
+  const idx = r * g.cols.length + c;
+  revealGrid(g);
   document.querySelector(`.choice.picked .outcome[data-c="${c}"]`)?.classList.add('hit');
   await wait(450);
 
   const [you, them] = cell(g, r, c);
   const gr = gradeMatrix(g, r, c);
-  const idx = r * g.cols.length + c;
   const isNash = nash(g).includes(idx), isJoint = bestJoint(g).includes(idx);
   record(g, { letter: gr.letter, coop: g.coop === undefined ? null : r === g.coop });
 
   const better = gr.letter === 'A' ? `You couldn't have done better against “${esc(g.cols[c])}”.`
     : `Your best reply to “${esc(g.cols[c])}” was <b>${esc(g.rows[gr.bestRows[0]])}</b>: ${fmt(gr.bestValue, g.unit)}.`;
   resultPanel(g, gr.letter, you, `${esc(g.them)} chose <b>${esc(g.cols[c])}</b> and got ${fmt(them, g.unit)}.`, better,
-    `${isNash ? '<span class="badge">⭐ Stable outcome</span>' : ''}${isJoint ? '<span class="badge">🤝 Best combined outcome</span>' : ''}`,
-    bestForBoth(g, idx) + fullTable(g, idx));
+    `${isNash ? '<span class="badge">⭐ Nash equilibrium</span>' : ''}${isJoint ? '<span class="badge">🤝 Best combined outcome</span>' : ''}`,
+    nashMatrix(g, idx) + bestForBoth(g, idx));
 }
+
+// Fill in every payoff in the choice grid and mark the Nash equilibria.
+function revealGrid(g) {
+  const N = nash(g);
+  document.querySelectorAll('.choice').forEach((b, r) => {
+    b.classList.remove('faded');
+    b.querySelectorAll('.outcome').forEach((o, c) => {
+      const [y, t] = cell(g, r, c);
+      const v = o.querySelector('.val');
+      v.classList.remove('hidden');
+      v.style.cssText = tone(g, y, 0);
+      v.textContent = fmt(y, g.unit);
+      o.querySelector('.their').textContent = `them ${fmt(t, g.unit)}`;
+      if (N.includes(r * g.cols.length + c)) { o.classList.add('nash'); o.insertAdjacentHTML('beforeend', '<span class="nash-mark" title="Nash equilibrium">⭐</span>'); }
+    });
+  });
+  if (N.length) $('#play').insertAdjacentHTML('beforeend', '<p class="legend">⭐ Nash equilibrium</p>');
+}
+
+// The best move for one side when the other side's move is fixed.
+const bestRow = (g, c, skip) => g.rows.map((_, r) => r).filter(r => r !== skip).sort((a, b) => util(cell(g, b, c)[0], g.unit) - util(cell(g, a, c)[0], g.unit))[0];
+const bestCol = (g, r, skip) => g.cols.map((_, c) => c).filter(c => c !== skip).sort((a, b) => util(cell(g, r, b)[1], g.unit) - util(cell(g, r, a)[1], g.unit))[0];
+
+function nashMatrix(g, hit) {
+  const N = nash(g), C = g.cols.length, them = esc(g.them);
+  const intro = 'A Nash equilibrium is a pair of moves where neither side can do better by changing only its own move.';
+  let body;
+  if (!N.length) {
+    body = `<p>This game has none. Whatever pair of moves you land on, one side gains by switching, so the safest plan is to keep your moves unpredictable.</p>`;
+  } else {
+    body = `<p>${N.length === 1 ? 'This game has 1:' : `This game has ${N.length}:`}</p><ul>${N.map(i => {
+      const r = Math.floor(i / C), c = i % C, [y, t] = g.pay[i];
+      const r2 = bestRow(g, c, r), c2 = bestCol(g, r, c);
+      return `<li>You pick <b>${esc(g.rows[r])}</b> and ${them} picks <b>${esc(g.cols[c])}</b>: you get ${fmt(y, g.unit)} and they get ${fmt(t, g.unit)}.
+        Switching to “${esc(g.rows[r2])}” would give you ${fmt(cell(g, r2, c)[0], g.unit)}, and switching to “${esc(g.cols[c2])}” would give ${them} ${fmt(cell(g, r, c2)[1], g.unit)}, so neither side wants to move.</li>`;
+    }).join('')}</ul>`;
+  }
+  const r = Math.floor(hit / C), c = hit % C;
+  let mine;
+  if (N.includes(hit)) mine = 'You landed on a Nash equilibrium, so neither of you would change your move after seeing the other.';
+  else {
+    const r2 = bestRow(g, c, r), c2 = bestCol(g, r, c);
+    const youGain = util(cell(g, r2, c)[0], g.unit) > util(cell(g, r, c)[0], g.unit);
+    const themGain = util(cell(g, r, c2)[1], g.unit) > util(cell(g, r, c)[1], g.unit);
+    const why = [youGain && `you'd rather have picked “${esc(g.rows[r2])}” (${fmt(cell(g, r2, c)[0], g.unit)})`,
+      themGain && `${them} would rather have picked “${esc(g.cols[c2])}” (${fmt(cell(g, r, c2)[1], g.unit)})`].filter(Boolean).join(', and ');
+    mine = `Your outcome isn't a Nash equilibrium: ${why}.`;
+  }
+  return nashBox(intro, body + `<p class="nash-yours">${mine}</p>`);
+}
+
+const nashBox = (intro, body) => `<div class="nash-box"><h3>⭐ Nash equilibrium</h3><p class="nash-intro">${intro}</p>${body}</div>`;
 
 // One plain sentence describing the outcome with the highest combined payoff.
 function bestForBoth(g, hit) {
   const j = bestJoint(g)[0], C = g.cols.length, [y, t] = g.pay[j];
-  const desc = `you <b>${esc(g.rows[Math.floor(j / C)].toLowerCase())}</b> and ${esc(g.them)} <b>${esc(g.cols[j % C].toLowerCase())}</b>, giving you ${fmt(y, g.unit)} and them ${fmt(t, g.unit)}`;
+  const desc = `you pick <b>${esc(g.rows[Math.floor(j / C)])}</b> and ${esc(g.them)} picks <b>${esc(g.cols[j % C])}</b>, giving you ${fmt(y, g.unit)} and them ${fmt(t, g.unit)}`;
   return `<p class="best-both">🤝 <b>Best combined outcome:</b> ${desc}.${bestJoint(g).includes(hit) ? ' You got there.' : ''}</p>`;
-}
-
-function fullTable(g, hit) {
-  const N = nash(g), J = bestJoint(g);
-  return `<details class="table-wrap"><summary>See the full payoff table</summary>
-    <div class="scroll"><table class="payoff">
-      <thead><tr><th scope="col"><span class="you-t">You</span> \\ <span class="them-t">${esc(g.them)}</span></th>${g.cols.map(c => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead>
-      <tbody>${g.rows.map((row, r) => `<tr><th scope="row">${esc(row)}</th>${g.cols.map((_, c) => {
-        const i = r * g.cols.length + c, [y, t] = g.pay[i];
-        return `<td class="${i === hit ? 'hit' : ''}"><span class="val" style="${tone(g, y, 0)}">${fmt(y, g.unit)}</span><span class="their">${fmt(t, g.unit)}</span>
-          <span class="marks">${N.includes(i) ? '⭐' : ''}${J.includes(i) ? '🤝' : ''}</span></td>`;
-      }).join('')}</tr>`).join('')}</tbody>
-    </table></div>
-    <p class="legend">⭐ stable (Nash equilibrium): nobody gains by switching alone · 🤝 best combined outcome</p>
-  </details>`;
 }
 
 // ----- Ultimatum -----
@@ -303,7 +353,17 @@ async function makeOffer() {
   resultPanel(g, gr.letter, o.you,
     o.accepted ? `Accepted. They got ${fmt(o.them, g.unit)}.` : `Rejected. ${o.you ? `You each end up with ${fmt(o.you, g.unit)} after the fallout.` : 'You walk away with nothing.'}`,
     gr.letter === 'A' ? 'That was the best possible offer.' : `The best offer was to keep ${gr.bestKeep}%: ${fmt(bestYou, g.unit)}.`,
-    `<span class="badge">${o.accepted ? '✅ Accepted' : '❌ Rejected'}</span><span class="badge">Their minimum: ${g.threshold}%</span>`);
+    `<span class="badge">${o.accepted ? '✅ Accepted' : '❌ Rejected'}</span><span class="badge">Their minimum: ${g.threshold}%</span>`,
+    nashUltimatum(g, gr.bestKeep));
+}
+
+function nashUltimatum(g, bestKeep) {
+  const fallback = g.rejectPay[1];
+  const k = [...ULT_STEPS].reverse().find(k => g.pot - Math.round(g.pot * k / 100) > fallback);
+  const theirs = g.pot - Math.round(g.pot * k / 100);
+  return nashBox('A Nash equilibrium is a pair of moves where neither side can do better by changing only its own move.',
+    `<p>If ${esc(g.them)} only cared about money, they would accept anything above the ${fmt(fallback, g.unit)} they get by saying no. The prediction is that you keep ${k}% and they accept ${fmt(theirs, g.unit)}.</p>
+     <p class="nash-yours">In experiments, people reject offers that feel unfair. ${esc(g.them)} needed at least ${g.threshold}%, so in practice your best move was to keep ${bestKeep}%.</p>`);
 }
 
 // ----- Centipede -----
@@ -361,7 +421,9 @@ async function centEnd(g, at, who) {
   resultPanel(g, gr.letter, n.you,
     `${who === 'you' ? 'You took' : `${esc(g.them)} took`} the pot at ${fmt(n.pot, g.unit)}. They got ${fmt(n.them, g.unit)}.`,
     gr.letter === 'A' ? 'Perfect timing: you took just before they would have.' : `Best possible for you: ${fmt(gr.bestValue, g.unit)}, taking just before ${esc(g.them)} would.`,
-    '');
+    '', nashBox('A Nash equilibrium is a pair of moves where neither side can do better by changing only its own move.',
+      `<p>Here it means taking on your very first turn, for ${fmt(centNodes(g)[0].you, g.unit)}. On the last turn, the player moving takes. Knowing that, the player before takes one turn earlier, and the same reasoning runs back to the start.</p>
+       <p class="nash-yours">${esc(g.them)} kept passing until their last turn, so the longer you waited before then, the more you earned. Most people in experiments pass several times too.</p>`));
 }
 
 // ----- Shared bits -----
@@ -387,9 +449,9 @@ function resultPanel(g, letter, you, sub, better, badges, extra = '') {
     </div>
     <p class="better">${better}</p>
     ${badges ? `<div class="badges">${badges}</div>` : ''}
+    ${extra}
     <p class="takeaway">💡 ${esc(g.takeaway)}</p>
     ${g.why ? `<details><summary>Why?</summary><p>${esc(g.why)}</p></details>` : ''}
-    ${extra}
     <button class="btn btn-primary btn-lg wide" data-action="next" id="next-btn">${store.run.idx + 1 >= store.run.ids.length ? 'See your results 🏁' : 'Next game →'} <kbd>Enter</kbd></button>
   </div>`;
   document.querySelector('.game-actions')?.remove();
