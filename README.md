@@ -38,4 +38,4 @@ It checks every game: that the computed Nash equilibria match `expectNash`, that
 
 ## Publishing a change
 
-Browsers keep old copies of the scripts and styles. After changing any file in `js/` or `css/`, raise the `?v=` number in `index.html`, `js/app.js` and `js/games/index.js` (for example from `?v=2` to `?v=3`) so visitors get the new version straight away.
+Browsers keep old copies of the scripts and styles. After changing any file in `js/` or `css/`, raise the `?v=` number in `index.html`, `js/app.js` and `js/games/index.js` (for example from `?v=3` to `?v=4`) so visitors get the new version straight away.

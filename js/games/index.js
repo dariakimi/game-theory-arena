@@ -1,12 +1,12 @@
-import classic from './classic.js?v=2';
-import business from './business.js?v=2';
-import social from './social.js?v=2';
-import geopolitics from './geopolitics.js?v=2';
-import tech from './tech.js?v=2';
-import bargaining from './bargaining.js?v=2';
-import auctions from './auctions.js?v=2';
-import markets from './markets.js?v=2';
-import signaling from './signaling.js?v=2';
+import classic from './classic.js?v=3';
+import business from './business.js?v=3';
+import social from './social.js?v=3';
+import geopolitics from './geopolitics.js?v=3';
+import tech from './tech.js?v=3';
+import bargaining from './bargaining.js?v=3';
+import auctions from './auctions.js?v=3';
+import markets from './markets.js?v=3';
+import signaling from './signaling.js?v=3';
 
 export const CATEGORIES = [
   { key: 'classic', name: 'Classics', emoji: '🎲', color: 'pink', games: classic },
