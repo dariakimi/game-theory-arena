@@ -35,3 +35,7 @@ node tools/validate.mjs
 ```
 
 It checks every game: that the computed Nash equilibria match `expectNash`, that `pay` fits the table size, and that text stays within its length limits.
+
+## Publishing a change
+
+Browsers keep old copies of the scripts and styles. After changing any file in `js/` or `css/`, raise the `?v=` number in `index.html`, `js/app.js` and `js/games/index.js` (for example from `?v=2` to `?v=3`) so visitors get the new version straight away.
