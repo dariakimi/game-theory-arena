@@ -82,12 +82,12 @@ export default [
   why: "Linux and Kubernetes grew because several large companies committed to them at the same time." },
 
 { id: 'talent-poaching', type: 'matrix', emoji: '🧑‍💻', title: 'Talent Poaching', tag: 'Salary spiral',
-  setup: "Hire your rival's engineers with big offers, or leave each other's teams alone?",
-  unit: { ...USD, label: 'annual value' }, them: 'Rival company', coop: 1,
+  setup: "Your engineering team earns you $8M a year after salaries. Hire your rival's engineers with big offers, or leave their team alone?",
+  unit: { ...USD, label: 'yearly profit from your team' }, them: 'Rival company', coop: 1,
   rows: ['Poach engineers', 'Leave them alone'], cols: ['Poaches', 'Leaves them alone'],
   pay: [[5e6, 5e6], [12e6, 2e6], [2e6, 12e6], [8e6, 8e6]], expectNash: [0],
-  takeaway: "Both companies poach, salaries climb, and neither ends up with a better team.",
-  why: "Apple, Google and others made secret no-poach deals to avoid this. In 2015 they paid $415M to settle the lawsuit that followed." },
+  takeaway: "Both companies poach, each team ends up the same size, and both pay $3M more in salaries for it.",
+  why: "Poaching alone adds $4M, and the company that loses engineers drops to $2M. If both poach, the hires cancel out but raises cost $3M. Apple and Google paid $415M in 2015 over no-poach deals." },
 
 { id: 'coffee-location', type: 'matrix', emoji: '☕', title: 'Where to Open the Café', tag: 'Location choice',
   setup: "Open your café downtown, or in a quiet neighbourhood? A rival café owner is choosing too.",
